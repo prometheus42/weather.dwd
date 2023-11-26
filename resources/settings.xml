@@ -23,7 +23,7 @@
 						<heading>32339</heading>
 					</control>
 				</setting>
-
+			</group>
 			<group id="2" label="32112">
 				<setting id="Location2ID" type="string" label="32117" help="" parent="">
 					<level>0</level>
@@ -45,6 +45,7 @@
 						<heading>32339</heading>
 					</control>
 				</setting>
+			</group>
 		</category>
 	</section>
 </settings>

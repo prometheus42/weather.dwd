@@ -64,9 +64,103 @@ ICON_MAPPING = {
     32767: 'keine Angabe???'
 }
 
+WEATHER_ICON_MAPPING = {
+    0: 	'tornado',
+    1: 	'tropical storm',
+    2: 	'hurricane',
+    3: 	'severe thunderstorms',
+    4: 	'thunderstorms',
+    5: 	'mixed rain and snow',
+    6: 	'mixed rain and sleet',
+    7: 	'mixed snow and sleet',
+    8: 	'freezing drizzle',
+    9: 	'drizzle',
+    10: 'freezing rain',
+    11: 'showers',
+    12: 'showers',
+    13: 'snow flurries',
+    14: 'light snow showers',
+    15: 'blowing snow',
+    16: 'snow',
+    17: 'hail',
+    18: 'sleet',
+    19: 'dust',
+    20: 'foggy',
+    21: 'haze',
+    22: 'smoky',
+    23: 'blustery',
+    24: 'windy',
+    25: 'cold',
+    26: 'cloudy',
+    27: 'mostly cloudy (night)',
+    28: 'mostly cloudy (day)',
+    29: 'partly cloudy (night)',
+    30: 'partly cloudy (day)',
+    31: 'clear (night)',
+    32: 'sunny',
+    33: 'fair (night)',
+    34: 'fair (day)',
+    35: 'mixed rain and hail',
+    36: 'hot',
+    37: 'isolated thunderstorms',
+    38: 'scattered thunderstorms',
+    39: 'scattered thunderstorms',
+    40: 'scattered showers',
+    41: 'heavy snow',
+    42: 'scattered snow showers',
+    43: 'heavy snow',
+    44: 'partly cloudy',
+    45: 'thundershowers',
+    46: 'snow showers',
+    47: 'isolated thundershowers',
+    "na": 'not available',
+}
+
+def get_wind_direction(deg):
+    """
+    Convert degrees on the compass to the correct label.
+
+    Source: https://github.com/randallspicher/weather.noaa/blob/master/resources/lib/utils.py
+    """
+    if deg >= 349 or deg <= 11:
+        return 71
+    elif deg >= 12 and deg <= 33:
+        return 72
+    elif deg >= 34 and deg <= 56:
+        return 73
+    elif deg >= 57 and deg <= 78:
+        return 74
+    elif deg >= 79 and deg <= 101:
+        return 75
+    elif deg >= 102 and deg <= 123:
+        return 76
+    elif deg >= 124 and deg <= 146:
+        return 77
+    elif deg >= 147 and deg <= 168:
+        return 78
+    elif deg >= 169 and deg <= 191:
+        return 79
+    elif deg >= 192 and deg <= 213:
+        return 80
+    elif deg >= 214 and deg <= 236:
+        return 81
+    elif deg >= 237 and deg <= 258:
+        return 82
+    elif deg >= 259 and deg <= 281:
+        return 83
+    elif deg >= 282 and deg <= 303:
+        return 84
+    elif deg >= 304 and deg <= 326:
+        return 85
+    elif deg >= 327 and deg <= 348:
+        return 86
 
 def log(txt, level=xbmc.LOGDEBUG):
-    """Log a message with a given log level."""
+    """
+    Log a message with a given log level.
+
+    Source: https://github.com/randallspicher/weather.noaa/blob/master/resources/lib/utils.py
+    """
     if DEBUG:
         message = f'{ADDONID}: {txt}'
         xbmc.log(msg=message, level=level)
@@ -88,7 +182,7 @@ def fetch_location(num):
 
 def set_property(name, value):
     """Set a property on the weather window object."""
-    WEATHER_WINDOW.setProperty(name, value)
+    WEATHER_WINDOW.setProperty(name, str(value))
 
 
 def clear_property(name):
@@ -130,7 +224,7 @@ def fetch_weather_data():
     set_property('Current.Temperature', current_data["temperature"][0])
     set_property('Current.Wind', '0')  # 'windSpeed'
     set_property('Current.WindDirection', 'N/A')  # 'windDirection'
-    set_property('Current.Humidity', int(current_data['humidity'][0])/1000)
+    set_property('Current.Humidity', int(current_data['humidity'][0])/10)
     set_property('Current.ChancePrecipitation',
                  current_data['precipitationProbablity'])  # precipitationTotal
     set_property('Current.FeelsLike', '0')
@@ -141,7 +235,12 @@ def fetch_weather_data():
     # set_property('Current.SeaLevel'	, '')
     # set_property('Current.GroundLevel'	, '')
     set_property('Current.FanartCode', 'na')
-    # sunshine, surfacePressure, isDay
+    # TODO: Check whether to include: sunshine, surfacePressure, isDay.
+    # use wind information from first day (today!), because it is missing in the 'current' data
+    set_property('Current.Wind', weather_data['days'][0]['windSpeed'])
+    wind_direction = int(weather_data['days'][0]['windDirection']) / 10
+    set_property('Current.WindDirection', xbmc.getLocalizedString(get_wind_direction(wind_direction)))
+    #
     for count, day in enumerate(weather_data['days'][1:]):
         set_property(f'Day{count}.Title', day['dayDate'])
         set_property(f'Day{count}.HighTemp', day['temperatureMax'])
@@ -201,7 +300,8 @@ def fetch_weather_alerts():
 ########################################################################################
 # Main Kodi entry point
 ########################################################################################
-log(f'version {ADDON.getAddonInfo("version")} started with argv: {sys.argv[1]}')
+log(
+    f'version {ADDON.getAddonInfo("version")} started with argv: {sys.argv[1]}')
 
 fetch_weather_data()
 fetch_weather_alerts()
@@ -210,12 +310,12 @@ set_property('Location1', 'Bramsche')
 set_property('Locations', 1)
 set_property('Forecast.IsFetched', 'true')
 set_property('Current.IsFetched', 'true')
-set_property('Today.IsFetched', '')
-set_property('Daily.IsFetched', 'true')
-set_property('Detailed.IsFetched', 'true')
-set_property('Weekend.IsFetched', '')
-set_property('36Hour.IsFetched', '')
-set_property('Hourly.IsFetched', 'true')
+# set_property('Today.IsFetched', '')
+# set_property('Daily.IsFetched', 'true')
+# set_property('Detailed.IsFetched', 'true')
+# set_property('Weekend.IsFetched', '')
+# set_property('36Hour.IsFetched', '')
+# set_property('Hourly.IsFetched', 'true')
 set_property('DWD.IsFetched', 'true')
 set_property('WeatherProvider', 'DWD')
 set_property('WeatherProviderLogo', xbmcvfs.translatePath(os.path.join(
