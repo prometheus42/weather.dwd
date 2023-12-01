@@ -480,106 +480,22 @@ msgctxt "#32343"
 msgid "Enter Location"
 msgstr ""
 
-##RESERVED
-## 32344-32348
-
-msgctxt "#32400"
-msgid "True Color/IR"
+msgctxt "#32344"
+msgid "Search for location..."
 msgstr ""
 
-msgctxt "#32401"
-msgid "Lightning Mapper"
+msgctxt "#32345"
+msgid "Choose location..."
 msgstr ""
 
-msgctxt "#32402"
-msgid "Sandwich RGB"
+msgctxt "#10000"
+msgid "Berlin"
 msgstr ""
 
-msgctxt "#32403"
-msgid ""
+msgctxt "#10001"
+msgid "Bramsche"
 msgstr ""
 
-msgctxt "#32404"
-msgid "Air Mass RBG"
+msgctxt "#10002"
+msgid "Sonstwo"
 msgstr ""
-
-msgctxt "#32405"
-msgid "Day Cloud Phase RBG"
-msgstr ""
-
-msgctxt "#32406"
-msgid "Nighttime Microphysics"
-msgstr ""
-
-msgctxt "#32407"
-msgid "Derived Motion Winds"
-msgstr ""
-
-msgctxt "#32408"
-msgid "Dust"
-msgstr ""
-
-msgctxt "#32409"
-msgid "Blue"
-msgstr ""
-
-msgctxt "#32410"
-msgid "Red"
-msgstr ""
-
-msgctxt "#32411"
-msgid "Veggie"
-msgstr ""
-
-msgctxt "#32412"
-msgid "Cirris"
-msgstr ""
-
-msgctxt "#32413"
-msgid "Snow/Ice"
-msgstr ""
-
-msgctxt "#32414"
-msgid "Cloud Particle"
-msgstr ""
-
-msgctxt "#32415"
-msgid "Shortwave Window"
-msgstr ""
-
-msgctxt "#32416"
-msgid "Upper-Level Water Vapor"
-msgstr ""
-
-msgctxt "#32417"
-msgid "Mid-Level Water Vapor"
-msgstr ""
-
-msgctxt "#32418"
-msgid "Lower-Level Water Vapor"
-msgstr ""
-
-msgctxt "#32419"
-msgid "Cloud Top"
-msgstr ""
-
-msgctxt "#32420"
-msgid "Ozone"
-msgstr ""
-
-msgctxt "#32421"
-msgid "Clean Longwave Window"
-msgstr ""
-
-msgctxt "#32422"
-msgid "Longwave Window"
-msgstr ""
-
-msgctxt "#32423"
-msgid "Dirty Longwave Window"
-msgstr ""
-
-msgctxt "#32424"
-msgid "CO2 Longwave"
-msgstr ""
-

@@ -3,47 +3,123 @@
 	<section id="weather.dwd">
 		<category id="location setup" label="32101" help="">
 			<group id="1" label="32111">
-				<setting id="Location1ID" type="number" label="32116" help="" parent="">
+				<setting id="Location1" type="action" label="32343" help="">
 					<level>0</level>
-					<default>E626</default>
+					<control type="button" format="action">
+						<data>RunScript(weather.dwd, find_location, 1)</data>
+					</control>
+				</setting>
+				<setting id="Location1Name" type="string" label="32111" help="">
+					<level>0</level>
+					<default/>
 					<constraints>
 						<allowempty>true</allowempty>
 					</constraints>
-					<control type="button" format="action">
-						<data>RunScript(weather.dwd,fetch_location,1)</data>
+					<enable>false</enable>
+					<control type="edit" format="string">
+						<heading>32111</heading>
 					</control>
 				</setting>
-				<setting id="Location1" type="string" label="32339" help="" parent="">
+				<setting id="Location1ID" type="string" label="32118" help="">
 					<level>0</level>
-					<default />
+					<default/>
 					<constraints>
 						<allowempty>true</allowempty>
 					</constraints>
 					<control type="edit" format="string">
-						<heading>32339</heading>
+						<heading>32118</heading>
 					</control>
+					<visible>false</visible>
 				</setting>
 			</group>
 			<group id="2" label="32112">
-				<setting id="Location2ID" type="string" label="32117" help="" parent="">
+				<setting id="Location2" type="action" label="32343" help="">
 					<level>0</level>
-					<default />
+					<control type="button" format="action">
+						<data>RunScript(weather.dwd, find_location, 2)</data>
+					</control>
+				</setting>
+				<setting id="Location2Name" type="string" label="32112" help="">
+					<level>0</level>
+					<default/>
 					<constraints>
 						<allowempty>true</allowempty>
 					</constraints>
-					<control type="button" format="action">
-						<data>RunScript(weather.dwd,fetch_location,2)</data>
+					<enable>false</enable>
+					<control type="edit" format="string">
+						<heading>32112</heading>
 					</control>
 				</setting>
-				<setting id="Location2" type="string" label="32339" help="" parent="">
+				<setting id="Location2ID" type="string" label="32117" help="">
 					<level>0</level>
-					<default />
+					<default/>
 					<constraints>
 						<allowempty>true</allowempty>
 					</constraints>
 					<control type="edit" format="string">
-						<heading>32339</heading>
+						<heading>32117</heading>
 					</control>
+					<visible>false</visible>
+				</setting>
+			</group>
+			<group id="3" label="32113">
+				<setting id="Location3" type="action" label="32343" help="">
+					<level>0</level>
+					<control type="button" format="action">
+						<data>RunScript(weather.dwd, find_location, 3)</data>
+					</control>
+				</setting>
+				<setting id="Location3Name" type="string" label="32113" help="">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<enable>false</enable>
+					<control type="edit" format="string">
+						<heading>32113</heading>
+					</control>
+				</setting>
+				<setting id="Location3ID" type="string" label="32118" help="">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="edit" format="string">
+						<heading>32118</heading>
+					</control>
+					<visible>false</visible>
+				</setting>
+			</group>
+			<group id="4" label="32114">
+				<setting id="Location4" type="action" label="32343" help="">
+					<level>0</level>
+					<control type="button" format="action">
+						<data>RunScript(weather.dwd, find_location, 4)</data>
+					</control>
+				</setting>
+				<setting id="Location4Name" type="string" label="32114" help="">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<enable>false</enable>
+					<control type="edit" format="string">
+						<heading>32114</heading>
+					</control>
+				</setting>
+				<setting id="Location4ID" type="string" label="32119" help="">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="edit" format="string">
+						<heading>32119</heading>
+					</control>
+					<visible>false</visible>
 				</setting>
 			</group>
 		</category>

@@ -1,2 +1,6 @@
+v0.2.0
+- Fixed settings to allow four locations.
+- Added more data points.
+- Improved parsing of weather data.
 v0.1.0
-- initial release
+- Initial release.
