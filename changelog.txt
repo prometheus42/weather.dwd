@@ -1,3 +1,7 @@
+v0.3.0
+- Fixed some label names and data conversions. 
+- Added icon paths for weather conditions.
+- Improved settings page.
 v0.2.0
 - Fixed settings to allow four locations.
 - Added more data points.

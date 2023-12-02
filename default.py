@@ -3,6 +3,7 @@ import os
 import sys
 import csv
 import json
+from datetime import datetime
 
 import requests
 
@@ -31,7 +32,7 @@ MAXDAYS = 10
 TIMEOUT = 10
 API_URL = 'https://app-prod-ws.warnwetter.de/v30/stationOverviewExtended?stationIds={station}'
 
-ICON_MAPPING = {
+DWD_ICON_MAPPING = {
     1: 'Sonne',
     2: 'Sonne, leicht bewölkt',
     3: 'Sonne, bewölkt',
@@ -63,59 +64,69 @@ ICON_MAPPING = {
     29: 'Gewitter, (Hagel)',
     30: 'Gewitter, (starker Hagel)',
     31: '(Wind)',
-    32767: 'keine Angabe???'
+    32767: 'not available'
 }
 
-WEATHER_ICON_MAPPING = {
-    0: 	'tornado',
-    1: 	'tropical storm',
-    2: 	'hurricane',
-    3: 	'severe thunderstorms',
-    4: 	'thunderstorms',
-    5: 	'mixed rain and snow',
-    6: 	'mixed rain and sleet',
-    7: 	'mixed snow and sleet',
-    8: 	'freezing drizzle',
-    9: 	'drizzle',
-    10: 'freezing rain',
-    11: 'showers',
-    12: 'showers',
-    13: 'snow flurries',
-    14: 'light snow showers',
-    15: 'blowing snow',
-    16: 'snow',
-    17: 'hail',
-    18: 'sleet',
-    19: 'dust',
-    20: 'foggy',
-    21: 'haze',
-    22: 'smoky',
-    23: 'blustery',
-    24: 'windy',
-    25: 'cold',
-    26: 'cloudy',
-    27: 'mostly cloudy (night)',
-    28: 'mostly cloudy (day)',
-    29: 'partly cloudy (night)',
-    30: 'partly cloudy (day)',
-    31: 'clear (night)',
-    32: 'sunny',
-    33: 'fair (night)',
-    34: 'fair (day)',
-    35: 'mixed rain and hail',
-    36: 'hot',
-    37: 'isolated thunderstorms',
-    38: 'scattered thunderstorms',
-    39: 'scattered thunderstorms',
-    40: 'scattered showers',
-    41: 'heavy snow',
-    42: 'scattered snow showers',
-    43: 'heavy snow',
-    44: 'partly cloudy',
-    45: 'thundershowers',
-    46: 'snow showers',
-    47: 'isolated thundershowers',
-    "na": 'not available',
+DWD_TO_KODI_ICON_MAPPING = {
+    1: 32,  # Sonne -> clear (day)
+    # 1: 31, # Sonne -> clear (night)
+    # TODO: Choose correct icon depending on time of the day!
+    2: 44,  # Sonne, leicht bewölkt -> partly cloudy
+    # 2: 29,  # Sonne, leicht bewölkt -> 'partly cloudy (night)'
+    # 2: 30,  # Sonne, leicht bewölkt -> 'partly cloudy (day)'
+    3: 28,  # Sonne, bewölkt -> 'mostly cloudy (day)',
+    # 3: 27,  # Sonne, bewölkt -> 'mostly cloudy (night)',
+    4: 26,  # : 'cloudy',
+    5: 20,  # 'foggy',
+    6: 20,  # Nebel und Rutschgefahr
+    7: 9,  # Leichter Regen -> drizzle
+    8: 11,  # Regen -> showers
+    9: 12,  # Starker Regen -> showers
+    10: 8,  # leichter Regen, Rutschgefahr -> freezing drizzle
+    11: 10,  # Starker Regen, Rutschgefahr -> freezing rain
+    12: 6,  # 'Regen, vereinzelt Schneefall' -> mixed rain and sleet
+    13: 5,  # Regen, vermehrt Schneefall -> mixed rain and snow
+    14: 14,  # 'leichter Schneefall -> light snow showers
+    15: 16,  # Schneefall -> snow
+    16: 41,  # starker Schneefall -> heavy snow
+    17: 17,  # Wolken, (Hagel) -> hail
+    18: 9,  # Sonne, leichter Regen -> drizzle
+    19: 12,  # Sonne, starker Regen -> showers
+    20: 6,  # Sonne, Regen, vereinzelter Schneefall -> mixed rain and sleet
+    21: 5,  # Sonne, Regen, vermehrter Schneefall -> mixed rain and snow
+    24: 17,  # Sonne, (Hagel) -> hail
+    25: 17,  # Sonne, (staker Hagel) -> hail
+    26: 4,  # Gewitter -> thunderstorm
+    # 26: 37,  # Gewitter -> isolated thunderstorms
+    27: 47,  # Gewitter, Regen -> isolated thundershowers
+    28: 45,  # Gewitter, starker Regen -> thundershowers
+    29: 35,  # Gewitter, (Hagel) -> mixed rain and hail
+    30: 35,  # Gewitter, (starker Hagel) -> mixed rain and hail
+    31: 24,  # Wind -> windy
+    # 0:  'tornado',
+    # 1:  'tropical storm',
+    # 2:  'hurricane',
+    # 3:  'severe thunderstorms',
+    # 7:  'mixed snow and sleet',
+    # 13: 'snow flurries',
+    # 15: 'blowing snow',
+    # 18: 'sleet',
+    # 19: 'dust',
+    # 21: 'haze',
+    # 22: 'smoky',
+    # 23: 'blustery',
+    # 25: 'cold',
+    # 33: 'fair (night)',
+    # 34: 'fair (day)',
+    # 36: 'hot',
+    # 38: 'scattered thunderstorms',
+    # 39: 'scattered thunderstorms',
+    # 40: 'scattered showers',
+    # 42: 'scattered snow showers',
+    # 43: 'heavy snow',
+    # 46: 'snow showers',
+    # 47: 'isolated thundershowers',
+    # "na": 'not available',
 }
 
 
@@ -192,41 +203,58 @@ def clear():
     set_property('Current.DewPoint', '0')
     set_property('Current.OutlookIcon', 'na.png')
     set_property('Current.FanartCode', 'na')
-    for count in range(0, MAXDAYS+1):
-        set_property(f'Day{count}.Title', 'N/A')
-        set_property(f'Day{count}.HighTemp', '0')
-        set_property(f'Day{count}.LowTemp', '0')
-        set_property(f'Day{count}.Outlook', 'N/A')
-        set_property(f'Day{count}.OutlookIcon', 'na.png')
-        set_property(f'Day{count}.FanartCode', 'na')
+    for i in range(0, MAXDAYS+1):
+        set_property(f'Day{i}.Title', 'N/A')
+        set_property(f'Day{i}.HighTemp', '0')
+        set_property(f'Day{i}.LowTemp', '0')
+        set_property(f'Day{i}.Outlook', 'N/A')
+        set_property(f'Day{i}.OutlookIcon', 'na.png')
+        set_property(f'Day{i}.FanartCode', 'na')
 
 
 def div10(text):
+    """
+    Convert most values from DWD by dividing by 10 and returning it as a integer.
+    """
     try:
         return int(text) / 10.
     except ValueError:
         return 0.0
 
 
-def getFeelsLike(T=10, V=25):
-    """ The formula to calculate the equivalent temperature related to the wind chill is:
+def get_first_valid_value(value_list):
+    for v in value_list:
+        log(f'Probing value: {v}')
+        if v != 32767:
+            log(f'Returning value: {v}')
+            return v
+
+
+def calc_feels_like_temperature(T=10, V=25):
+    """ 
+    The formula to calculate the equivalent temperature related to the wind chill is:
         T(REF) = 13.12 + 0.6215 * T - 11.37 * V**0.16 + 0.3965 * T * V**0.16
-        Or:
+    Or:
         T(REF): is the equivalent temperature in degrees Celsius
-        V: is the wind speed in km/h measured at 10m height
-        T: is the temperature of the air in degrees Celsius
-        source: http://zpag.tripod.com/Meteo/eolien.htm
-        source: https://forum.kodi.tv/showthread.php?tid=114637&pid=937168#pid937168
+    V: is the wind speed in km/h measured at 10m height
+    T: is the temperature of the air in degrees Celsius
+
+    Source: http://zpag.tripod.com/Meteo/eolien.htm
+    Source: https://forum.kodi.tv/showthread.php?tid=114637&pid=937168#pid937168
     """
-    FeelsLike = T
-    # Wind speeds of 4 mph or less, the wind chill temperature is the same as the actual air temperature.
+    feels_like = T
+    # Wind speeds of 4 mph or less, the wind chill temperature is the same as
+    # the actual air temperature.
     if round((V + .0) / 1.609344) > 4:
-        FeelsLike = (13.12 + (0.6215 * T) -
-                     (11.37 * V**0.16) + (0.3965 * T * V**0.16))
-    return str(round(FeelsLike))
+        feels_like = (13.12 + (0.6215 * T) -
+                      (11.37 * V**0.16) + (0.3965 * T * V**0.16))
+    return str(round(feels_like))
 
 
 def get_station_ids():
+    """
+    Get all station IDs from the Kodi settings.
+    """
     station_ids = [ADDON.getSetting('Location1ID'), ADDON.getSetting(
         'Location2ID'), ADDON.getSetting('Location3ID'), ADDON.getSetting('Location4ID')]
     station_ids = list(filter(None, station_ids))
@@ -235,13 +263,17 @@ def get_station_ids():
 
 
 def get_station_names():
+    """
+    Get all station names from the Kodi settings.
+    """
     station_names = [ADDON.getSetting('Location1Name'), ADDON.getSetting(
         'Location2Name'), ADDON.getSetting('Location3Name'), ADDON.getSetting('Location4Name')]
     station_names = list(filter(None, station_names))
+    log(f'Getting station names: {station_names}')
     return station_names
 
 
-def fetch_weather_data():
+def fetch_weather_data(no):
     """
     Fetches weather data from DWD for all given station IDs.
     """
@@ -249,28 +281,74 @@ def fetch_weather_data():
     station_ids = get_station_ids()
     r = requests.get(API_URL.format(
         station=','.join(station_ids)), timeout=TIMEOUT)
-    for weather_data in r.json().values():
-        marshal_weather_data(weather_data)
-        marshal_alert_data(weather_data)
-        # TODO: Check how to support multiple locations.
-        break
+    weather_data = r.json()
+    marshal_weather_data(weather_data[station_ids[no-1]])
+    marshal_alert_data(weather_data[station_ids[no-1]])
+
+
+def get_icon_for_weather(icon_no):
+    """
+    Evaluates the icon number from the DWD and chooses the fitting icon from Kodi.
+    """
+    condition_icon_no = DWD_TO_KODI_ICON_MAPPING[icon_no]
+    condition_icon_file = xbmcvfs.translatePath(os.path.join(
+        'resource://', 'resource.images.weathericons.default', f'{condition_icon_no}.png'))
+    # condition_icon_file = xbmcvfs.translatePath(os.path.join(
+    #    'special://home', 'addons', 'resource.images.weathericons.default', 'resources', f'{condition_icon_no}.png'))
+    return condition_icon_file
+
+
+def calc_time(timestamp):
+    """
+    Format the timestamp from DWD in the valid format for Kodi.
+    """
+    # value = "%d-%d-%dT%02d:%02d:00.088Z" % (d.year, d.month, d.day, h, m)
+    try:
+        timestamp = int(timestamp) / 1000
+        dt = datetime.fromtimestamp(timestamp)
+        return str(dt)
+        # return dt.strftime("%y-%m-%dT%H:%M%:z")
+    except ValueError:
+        return ''
 
 
 def marshal_weather_data(weather_data):
     """
     Set properties for a single weather station for today and the next days.
+
+    List of all labels:
+     - https://github.com/xbmc/repo-scripts/raw/jarvis/weather.openweathermap.extended/README.txt
+     - https://github.com/vlmaksime/weather.gismeteo/raw/master/weather.gismeteo/README.txt
     """
     log(f'Marshal weather data for {weather_data["forecast1"]["stationId"]}')
     current_data = weather_data['forecast1']
-    set_property('Current.Condition', ICON_MAPPING[current_data['icon1h'][0]])
-    set_property('Current.Temperature', current_data['temperature'][0])
-    set_property('Current.Humidity', div10(current_data['humidity'][0]))
+    set_property('Current.Condition',
+                 DWD_ICON_MAPPING[current_data['icon1h'][0]])
+    set_property('Current.Temperature', div10(
+        get_first_valid_value(current_data['temperature'])))
+    set_property('Current.Humidity', div10(
+        get_first_valid_value(current_data['humidity'])))
     set_property('Current.ChancePrecipitation',
                  current_data['precipitationProbablity'])  # precipitationTotal
-    set_property('Current.DewPoint', div10(current_data['dewPoint2m'][0]))
+    set_property('Current.DewPoint', div10(
+        get_first_valid_value(current_data['dewPoint2m'])))
     set_property('Current.OutlookIcon', 'na.png')
+    # TODO: Check why wind and precipitation data is mostly empty?!
     set_property('Current.WindGust', current_data['windGust'])
+    set_property('Current.Pressure', div10(
+        get_first_valid_value(current_data['surfacePressure'])))
+    # set_property('Current.SeaLevel', 'true')  # pressure at sealevel
+    set_property('Current.Precipitation',
+                 get_first_valid_value(current_data['precipitationTotal']))
+    sunrise = calc_time(weather_data['days'][0]['sunrise'])
+    set_property('Today.Sunrise', sunrise)
+    sunset = calc_time(weather_data['days'][0]['sunset'])
+    set_property('Today.Sunset', sunset)
+    set_property('Today.HighTemp', weather_data['days'][0]['temperatureMax'])
+    set_property('Today.LowTemp', weather_data['days'][0]['temperatureMin'])
     set_property('Current.FanartCode', 'na')
+    set_property('Current.ConditionIcon',
+                 get_icon_for_weather(current_data['icon1h'][0]))
     # TODO: Check whether to include: sunshine, surfacePressure, isDay.
     # use wind information from first day (today!), because it is missing in the 'current' data
     set_property('Current.Wind', div10(weather_data['days'][0]['windSpeed']))
@@ -278,34 +356,30 @@ def marshal_weather_data(weather_data):
     set_property('Current.WindDirection', xbmc.getLocalizedString(
         get_wind_direction(wind_direction)))
     # calculate feels like temperature
-    set_property('Current.FeelsLike',  getFeelsLike(
-        current_data["temperature"][0], div10(weather_data['days'][0]['windSpeed'])))
-    # set_property('Current.UVIndex', '0')
-    # set_property('Current.SeaLevel'	, '')
-    # set_property('Current.GroundLevel'	, '')
+    set_property('Current.FeelsLike',  calc_feels_like_temperature(
+        div10(get_first_valid_value(current_data["temperature"])), div10(weather_data['days'][0]['windSpeed'])))
     #
-    for count, day in enumerate(weather_data['days'][1:]):
-        set_property(f'Day{count}.Title', day['dayDate'])
-        set_property(f'Day{count}.HighTemp', day['temperatureMax'])
-        set_property(f'Day{count}.LowTemp', day['temperatureMin'])
+    for no, day in enumerate(weather_data['days'][1:]):
+        # Day0.xxx - Day6.xxx
+        set_property(f'Day{no}.Title', day['dayDate'])
+        set_property(f'Day{no}.HighTemp', day['temperatureMax'])
+        set_property(f'Day{no}.LowTemp', day['temperatureMin'])
+        set_property(f'Day{no}.Outlook', DWD_ICON_MAPPING[day['icon']])
+        set_property(f'Day{no}.OutlookIcon', get_icon_for_weather(day['icon']))
+        set_property(f'Day{no}.FanartCode', 'na')
+        # fill extended labels
+        set_property(f'Daily.{no}.Precipitation', day['precipitation'])
+        set_property(f'Daily.{no}.WindDirection', xbmc.getLocalizedString(
+            get_wind_direction(day['windDirection'])))
+        set_property(f'Daily.{no}.WindSpeed', day['windSpeed'])
         # set_property('Daily.%i.TempDay' % (count+1), u'%s%s' % (FtoC(item['temperature']), TEMPUNIT))
         # set_property('Daily.%i.TempNight'	% (count+1), '')
-        set_property(f'Day{count}.Outlook', ICON_MAPPING[day['icon']])
-        set_property(f'Daily.{count}.WindDirection', xbmc.getLocalizedString(
-            get_wind_direction(day['windDirection'])))
-        set_property(f'Daily.{count}.WindSpeed', day['windSpeed'])
         # set_property('Daily.%i.ShortOutlook'	% (count+1), item['shortForecast'])
         # set_property('Daily.%i.DetailedOutlook'	% (count+1), item['detailedForecast'])
-        # 		code, rain=code_from_icon(icon)
-        # 		weathercode = WEATHER_CODES.get(code)
-        # TODO: WEATHER_ICON % weathercode
-        set_property(f'Day{count}.OutlookIcon', 'na.png')
-        set_property(f'Day{count}.FanartCode', 'na')  # TODO: weathercode
-        # set_property('Day%i.isDaytime'		% (count),str(item['isDaytime']))
-        # set_property('Day%i.Title'		% (count), item['name'])
         # set_property('Daily.%i.LongDay'		% (count+1), item['name'])
         # set_property('Daily.%i.ShortDay'	% (count+1), get_weekday(startstamp,'s')+" (d)")
-        set_property(f'Daily.{count+1}.Precipitation', day['precipitation'])
+    # TODO: Check more extended labels.
+    # Hourly.1.xxx - Hourly.24.xxx, Daily.1.xxx - Daily.10.xxx
 
 
 def marshal_alert_data(weather_data):
@@ -316,7 +390,7 @@ def marshal_alert_data(weather_data):
     warning_data = weather_data['warnings']
     if warning_data:
         set_property('Alerts.IsFetched', 'true')
-        for count, w in enumerate(warning_data, start=1):
+        for no, w in enumerate(warning_data, start=1):
             # warn_id = w["warnId"]
             # warn_type = w["type"]
             # level = w["level"]
@@ -324,10 +398,10 @@ def marshal_alert_data(weather_data):
             # "end": 1701075600000,
             # "bn": false,
             # "descriptionText": "Es tritt leichter Frost zwischen -2 °C und -4 °C auf.",
-            set_property(f'Alerts.{count}.headline', w['headline'])
-            set_property(f'Alerts.{count}.instruction', w['instruction'])
-            set_property(f'Alerts.{count}.description', w['description'])
-            set_property(f'Alerts.{count}.event', w['event'])
+            set_property(f'Alerts.{no}.headline', w['headline'])
+            set_property(f'Alerts.{no}.instruction', w['instruction'])
+            set_property(f'Alerts.{no}.description', w['description'])
+            set_property(f'Alerts.{no}.event', w['event'])
             # set_property('Alerts.%i.status'		% (count+1), str(thisdata['status']))
             # set_property('Alerts.%i.messageType'	% (count+1), str(thisdata['messageType']))
             # set_property('Alerts.%i.category'	% (count+1), str(thisdata['category']))
@@ -388,6 +462,8 @@ def find_location(location_no):
                     location_no), selected_location[1])
                 ADDON.setSetting('Location{0}ID'.format(
                     location_no), selected_location[0])
+                ADDON.setSetting('Location{0}Name'.format(
+                    location_no), selected_location[1])
         else:
             xbmcgui.Dialog().ok('Station not found', 'Could not find a station like that')
 
@@ -398,6 +474,9 @@ def dialog_select(heading, _list, **kwargs):
 
 def get_keyboard_text(line='', heading='', hidden=False):
     """
+    Get a text input from on-screen keyboard in Kodi or return a empty text if
+    the user aborts the dialog.
+
     Source: https://github.com/vlmaksime/weather.gismeteo/blob/master/weather.gismeteo/resources/libs/__init__.py
     """
     kbd = xbmc.Keyboard(line, heading, hidden)
@@ -407,29 +486,46 @@ def get_keyboard_text(line='', heading='', hidden=False):
     return ''
 
 
-########################################################################################
-# Main Kodi entry point
-########################################################################################
-log(f'{ADDON.getAddonInfo("name")} version {ADDON.getAddonInfo("version")} started with argv: {sys.argv}')
-if sys.argv[1] == 'find_location':
-    log('find_location: ' + sys.argv[2])
-    find_location(sys.argv[2])
-elif sys.argv[1] == '1':
-    fetch_weather_data()
-    for count, name in enumerate(get_station_names(), start=1):
-        set_property(f'Location{count}', name)
-    set_property('Locations', len(get_station_names()))
-    set_property('Forecast.IsFetched', 'true')
-    set_property('Current.IsFetched', 'true')
-    set_property('Today.IsFetched', 'true')
-    set_property('Daily.IsFetched', 'true')
-    # set_property('Detailed.IsFetched', 'true')
-    # set_property('Weekend.IsFetched', '')
-    # set_property('36Hour.IsFetched', '')
-    # set_property('Hourly.IsFetched', 'true')
-    set_property('DWD.IsFetched', 'true')
-    set_property('WeatherProvider', 'DWD')
-    set_property('WeatherProviderLogo', xbmcvfs.translatePath(os.path.join(
-        ADDON.getAddonInfo('path'), 'resources', 'media', 'dwd-logo-png.png')))
-else:
-    log('Unsupported command line argument!', xbmc.LOGERROR)
+def main():
+    """
+    Start the weather addon for Kodi.
+    """
+    log(f'{ADDON.getAddonInfo("name")} version {ADDON.getAddonInfo("version")} started with argv: {sys.argv}')
+    if sys.argv[1] == 'find_location':
+        log('find_location: ' + sys.argv[2])
+        find_location(sys.argv[2])
+    elif sys.argv[1] in ('1', '2', '3', '4'):
+        location_no = int(sys.argv[1])
+        log(f'Fetching weather for location no. {location_no}')
+        fetch_weather_data(location_no)
+        set_property('WeatherProvider', 'DWD')
+        set_property('WeatherProviderLogo', xbmcvfs.translatePath(os.path.join(
+            ADDON.getAddonInfo('path'), 'resources', 'media', 'dwd-logo-png.png')))
+        # set location information
+        for count, name in enumerate(get_station_names(), start=1):
+            set_property(f'Location{count}', name)
+            if count == location_no:
+                current_station_name = get_station_names()[location_no-1]
+                set_property('Current.Location', current_station_name)
+                set_property('Forecast.City', current_station_name)
+                set_property('Forecast.Country', 'Germany')
+                # set_property('Forecast.State', 'true')
+                # TODO: Get coordinates from station list.
+                # set_property('Forecast.Latitude', '')
+                # set_property('Forecast.Longitude', '')
+        set_property('Locations', len(get_station_names()))
+        # set flags
+        set_property('DWD.IsFetched', 'true')
+        set_property('Forecast.IsFetched', 'true')
+        set_property('Current.IsFetched', 'true')
+        set_property('Today.IsFetched', 'true')
+        set_property('Detailed.IsFetched', 'true')
+        set_property('Daily.IsFetched', 'false')
+        set_property('Weekend.IsFetched', 'false')
+        set_property('36Hour.IsFetched', 'false')
+        set_property('Hourly.IsFetched', 'false')
+    else:
+        log('Unsupported command line argument!', xbmc.LOGERROR)
+
+
+main()
