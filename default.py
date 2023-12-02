@@ -1,8 +1,10 @@
+"""
+A Kodi Plugin for the German Weather Service (DWD) weather forecasts.
+"""
 
 import os
 import sys
 import csv
-import json
 from datetime import datetime
 
 import requests
@@ -71,9 +73,9 @@ DWD_TO_KODI_ICON_MAPPING = {
     1: 32,  # Sonne -> clear (day)
     # 1: 31, # Sonne -> clear (night)
     # TODO: Choose correct icon depending on time of the day!
-    2: 44,  # Sonne, leicht bewölkt -> partly cloudy
+    2: 30,  # Sonne, leicht bewölkt -> 'partly cloudy (day)'
     # 2: 29,  # Sonne, leicht bewölkt -> 'partly cloudy (night)'
-    # 2: 30,  # Sonne, leicht bewölkt -> 'partly cloudy (day)'
+    # 2: 44,  # Sonne, leicht bewölkt -> partly cloudy
     3: 28,  # Sonne, bewölkt -> 'mostly cloudy (day)',
     # 3: 27,  # Sonne, bewölkt -> 'mostly cloudy (night)',
     4: 26,  # : 'cloudy',
@@ -176,9 +178,9 @@ def log(txt, level=xbmc.LOGDEBUG):
 
     Source: https://github.com/randallspicher/weather.noaa/blob/master/resources/lib/utils.py
     """
-    if True:
-        message = f'{ADDONID}: {txt}'
-        xbmc.log(msg=message, level=level)
+    # if DEBUG:
+    message = f'{ADDONID}: {txt}'
+    xbmc.log(msg=message, level=level)
 
 
 def set_property(name, value):
@@ -223,10 +225,13 @@ def div10(text):
 
 
 def get_first_valid_value(value_list):
+    """
+    Get the first valid value in the list provided by DWD. Sometimes a value is
+    not available and the number 32767 is delivered instead. In these cases the
+    next valid number is returned.
+    """
     for v in value_list:
-        log(f'Probing value: {v}')
         if v != 32767:
-            log(f'Returning value: {v}')
             return v
 
 
@@ -286,15 +291,35 @@ def fetch_weather_data(no):
     marshal_alert_data(weather_data[station_ids[no-1]])
 
 
-def get_icon_for_weather(icon_no):
+def get_icon_code_for_weather(icon_no, day=True):
     """
-    Evaluates the icon number from the DWD and chooses the fitting icon from Kodi.
+    Evaluates the icon number from the DWD and chooses the fitting icon code
+    from the icons provided by Kodi.
     """
+    if isinstance(icon_no, str):
+        icon_no = int(icon_no)
     condition_icon_no = DWD_TO_KODI_ICON_MAPPING[icon_no]
-    condition_icon_file = xbmcvfs.translatePath(os.path.join(
-        'resource://', 'resource.images.weathericons.default', f'{condition_icon_no}.png'))
+    # correct icon if it is night
+    if icon_no == 1 and not day:
+        condition_icon_no = 31
+    if icon_no == 2 and not day:
+        condition_icon_no = 29
+    if icon_no == 3 and not day:
+        condition_icon_no = 27
+    return condition_icon_no
+
+
+def get_icon_path_for_weather(icon_no, day=True):
+    """
+    Evaluates the icon number from the DWD and gets the icon code and provides
+    a file path to a fitting icon provided by Kodi.
+    """
+    condition_icon_no = get_icon_code_for_weather(icon_no, day=day)
+    # condition_icon_file = xbmcvfs.translatePath(os.path.join(
+    #    'resource://', 'resource.images.weathericons.default', f'{condition_icon_no}.png'))
     # condition_icon_file = xbmcvfs.translatePath(os.path.join(
     #    'special://home', 'addons', 'resource.images.weathericons.default', 'resources', f'{condition_icon_no}.png'))
+    condition_icon_file = f'{condition_icon_no}.png'
     return condition_icon_file
 
 
@@ -302,12 +327,10 @@ def calc_time(timestamp):
     """
     Format the timestamp from DWD in the valid format for Kodi.
     """
-    # value = "%d-%d-%dT%02d:%02d:00.088Z" % (d.year, d.month, d.day, h, m)
     try:
         timestamp = int(timestamp) / 1000
         dt = datetime.fromtimestamp(timestamp)
         return str(dt)
-        # return dt.strftime("%y-%m-%dT%H:%M%:z")
     except ValueError:
         return ''
 
@@ -321,35 +344,41 @@ def marshal_weather_data(weather_data):
      - https://github.com/vlmaksime/weather.gismeteo/raw/master/weather.gismeteo/README.txt
     """
     log(f'Marshal weather data for {weather_data["forecast1"]["stationId"]}')
+    # get current hour on today to know which value to use
+    current_hour = datetime.now().hour
+    log(f'Current hour is: {current_hour}')
+    # get values from forecast data and save it to the correct properties
     current_data = weather_data['forecast1']
     set_property('Current.Condition',
-                 DWD_ICON_MAPPING[current_data['icon1h'][0]])
+                 DWD_ICON_MAPPING[current_data['icon1h'][current_hour]])
     set_property('Current.Temperature', div10(
-        get_first_valid_value(current_data['temperature'])))
+        current_data['temperature'][current_hour]))
     set_property('Current.Humidity', div10(
-        get_first_valid_value(current_data['humidity'])))
+        current_data['humidity'][current_hour]))
     set_property('Current.ChancePrecipitation',
                  current_data['precipitationProbablity'])  # precipitationTotal
     set_property('Current.DewPoint', div10(
-        get_first_valid_value(current_data['dewPoint2m'])))
-    set_property('Current.OutlookIcon', 'na.png')
+        current_data['dewPoint2m'][current_hour]))
+    # TODO: Use isDay[]
+    set_property('Current.OutlookIcon',
+                 get_icon_path_for_weather(current_data['icon1h'][current_hour]))
     # TODO: Check why wind and precipitation data is mostly empty?!
     set_property('Current.WindGust', current_data['windGust'])
     set_property('Current.Pressure', div10(
-        get_first_valid_value(current_data['surfacePressure'])))
-    # set_property('Current.SeaLevel', 'true')  # pressure at sealevel
+        current_data['surfacePressure'][current_hour]))
     set_property('Current.Precipitation',
-                 get_first_valid_value(current_data['precipitationTotal']))
+                 current_data['precipitationTotal'][current_hour])
     sunrise = calc_time(weather_data['days'][0]['sunrise'])
     set_property('Today.Sunrise', sunrise)
     sunset = calc_time(weather_data['days'][0]['sunset'])
     set_property('Today.Sunset', sunset)
     set_property('Today.HighTemp', weather_data['days'][0]['temperatureMax'])
     set_property('Today.LowTemp', weather_data['days'][0]['temperatureMin'])
-    set_property('Current.FanartCode', 'na')
+    set_property('Current.FanartCode', get_icon_code_for_weather(
+        current_data['icon1h'][current_hour]))
     set_property('Current.ConditionIcon',
-                 get_icon_for_weather(current_data['icon1h'][0]))
-    # TODO: Check whether to include: sunshine, surfacePressure, isDay.
+                 get_icon_path_for_weather(current_data['icon1h'][current_hour]))
+    # TODO: Check were to put: sunshine.
     # use wind information from first day (today!), because it is missing in the 'current' data
     set_property('Current.Wind', div10(weather_data['days'][0]['windSpeed']))
     wind_direction = div10(weather_data['days'][0]['windDirection'])
@@ -358,28 +387,51 @@ def marshal_weather_data(weather_data):
     # calculate feels like temperature
     set_property('Current.FeelsLike',  calc_feels_like_temperature(
         div10(get_first_valid_value(current_data["temperature"])), div10(weather_data['days'][0]['windSpeed'])))
-    #
+    # fill in the forecast for the next days
     for no, day in enumerate(weather_data['days'][1:]):
         # Day0.xxx - Day6.xxx
         set_property(f'Day{no}.Title', day['dayDate'])
-        set_property(f'Day{no}.HighTemp', day['temperatureMax'])
-        set_property(f'Day{no}.LowTemp', day['temperatureMin'])
+        set_property(f'Day{no}.HighTemp', div10(day['temperatureMax']))
+        set_property(f'Day{no}.LowTemp', div10(day['temperatureMin']))
         set_property(f'Day{no}.Outlook', DWD_ICON_MAPPING[day['icon']])
-        set_property(f'Day{no}.OutlookIcon', get_icon_for_weather(day['icon']))
+        set_property(f'Day{no}.OutlookIcon',
+                     get_icon_path_for_weather(day['icon']))
         set_property(f'Day{no}.FanartCode', 'na')
-        # fill extended labels
-        set_property(f'Daily.{no}.Precipitation', day['precipitation'])
+        # Daily.1.xxx - Daily.10.xxx
+        dt = datetime.fromisoformat(day['dayDate'])
+        set_property(f'Daily.{no}.LongDay', dt.strftime('%A'))
+        set_property(f'Daily.{no}.ShortDay', dt.strftime('%a'))
+        set_property(f'Daily.{no}.LongDate', dt.strftime('%d. %B'))
+        set_property(f'Daily.{no}.ShortDate', dt.strftime('%d. %b'))
+        set_property(f'Daily.{no}.Outlook', DWD_ICON_MAPPING[day['icon']])
+        set_property(f'Daily.{no}.ShortOutlook', DWD_ICON_MAPPING[day['icon']])
+        set_property(f'Daily.{no}.OutlookIcon',
+                     get_icon_path_for_weather(day['icon']))
+        set_property(f'Daily.{no}.FanartCode',
+                     get_icon_code_for_weather(day['icon']))
+        set_property(f'Daily.{no}.WindSpeed', div10(day['windSpeed']))
         set_property(f'Daily.{no}.WindDirection', xbmc.getLocalizedString(
             get_wind_direction(day['windDirection'])))
-        set_property(f'Daily.{no}.WindSpeed', day['windSpeed'])
-        # set_property('Daily.%i.TempDay' % (count+1), u'%s%s' % (FtoC(item['temperature']), TEMPUNIT))
-        # set_property('Daily.%i.TempNight'	% (count+1), '')
-        # set_property('Daily.%i.ShortOutlook'	% (count+1), item['shortForecast'])
-        # set_property('Daily.%i.DetailedOutlook'	% (count+1), item['detailedForecast'])
-        # set_property('Daily.%i.LongDay'		% (count+1), item['name'])
-        # set_property('Daily.%i.ShortDay'	% (count+1), get_weekday(startstamp,'s')+" (d)")
+        set_property(f'Daily.{no}.WindDegree', day['windDirection'])
+        set_property(f'Daily.{no}.WindGust', div10(day['windGust']))
+        set_property(f'Daily.{no}.HighTemperature',
+                     div10(day['temperatureMin']))
+        set_property(f'Daily.{no}.LowTemperature',
+                     div10(day['temperatureMax']))
+        set_property(f'Daily.{no}.Precipitation', day['precipitation'])
+        # set_property(f'Daily.{no}.TempMorn', )
+        # set_property(f'Daily.{no}.TempDay', )
+        # set_property(f'Daily.{no}.TempEve', )
+        # set_property(f'Daily.{no}.TempNight', )
+        # set_property(f'Daily.{no}.Humidity', )
+        # set_property(f'Daily.{no}.DewPoint', )
+        # set_property(f'Daily.{no}.FeelsLike', )
+        # set_property(f'Daily.{no}.Pressure', )
+        # set_property(f'Daily.{no}.Cloudiness', )
+        # set_property(f'Daily.{no}.Rain', )
+        # set_property(f'Daily.{no}.Snow', )
     # TODO: Check more extended labels.
-    # Hourly.1.xxx - Hourly.24.xxx, Daily.1.xxx - Daily.10.xxx
+    # Hourly.1.xxx - Hourly.24.xxx, 36Hour.1.xxx - 36Hour.3.xxx, Weekend.1.xxx - Weekend.2.xxx
 
 
 def marshal_alert_data(weather_data):
@@ -415,6 +467,13 @@ def marshal_alert_data(weather_data):
 
 
 def check_station_list(station_list):
+    """
+    The official station list of the DWD [1] contains some stations for which
+    no weather data is provided. So we check a station list by requesting data
+    for each entry and reject it if the response is empty.
+
+    [1] https://www.dwd.de/DE/leistungen/met_verfahren_mosmix/mosmix_stationskatalog.cfg
+    """
     new_station_list = []
     for s in station_list:
         r = requests.get(API_URL.format(station=s[0]), timeout=10)
@@ -424,19 +483,25 @@ def check_station_list(station_list):
 
 
 def load_station_list():
+    """
+    Load list of weather stations from a CSV file and return it.
+    """
     filename = xbmcvfs.translatePath(os.path.join(
         ADDON.getAddonInfo('path'), 'resources', 'station_list.csv'))
     station_list = []
     with open(filename, newline='', encoding='utf8') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
         for row in reader:
-            # TODO: Find a better station list without mojibake! -----v
+            # TODO: Find a better station list without mojibake (65533)!
             station_list.append(
                 (row['ID'], row['NAME'].replace(chr(65533), '').title()))
     return station_list
 
 
 def find_station_by_name(station_name):
+    """
+    Get the list of weather stations and filter for a given station name.
+    """
     station_list = load_station_list()
     # TODO: Check whether to use SequenceMatcher from difflib or other algorithms like Levenshtein Distance.
     station_list = [s for s in station_list if station_name in s[1]]
@@ -458,17 +523,20 @@ def find_location(location_no):
             if selected != -1:
                 selected_location = found_stations[selected]
                 log(f'Selected location: {selected_location}')
-                ADDON.setSetting('Location{0}'.format(
-                    location_no), selected_location[1])
-                ADDON.setSetting('Location{0}ID'.format(
-                    location_no), selected_location[0])
-                ADDON.setSetting('Location{0}Name'.format(
-                    location_no), selected_location[1])
+                ADDON.setSetting(
+                    f'Location{location_no}ID', selected_location[0])
+                ADDON.setSetting(
+                    f'Location{location_no}', selected_location[1])
+                ADDON.setSetting(
+                    f'Location{location_no}Name', selected_location[1])
         else:
             xbmcgui.Dialog().ok('Station not found', 'Could not find a station like that')
 
 
 def dialog_select(heading, _list, **kwargs):
+    """
+    Show a dialog to select an item from a given list.
+    """
     return xbmcgui.Dialog().select(heading, _list, **kwargs)
 
 
@@ -515,15 +583,15 @@ def main():
                 # set_property('Forecast.Longitude', '')
         set_property('Locations', len(get_station_names()))
         # set flags
-        set_property('DWD.IsFetched', 'true')
-        set_property('Forecast.IsFetched', 'true')
-        set_property('Current.IsFetched', 'true')
-        set_property('Today.IsFetched', 'true')
-        set_property('Detailed.IsFetched', 'true')
-        set_property('Daily.IsFetched', 'false')
-        set_property('Weekend.IsFetched', 'false')
-        set_property('36Hour.IsFetched', 'false')
-        set_property('Hourly.IsFetched', 'false')
+        set_property('DWD.IsFetched', True)
+        set_property('Forecast.IsFetched', True)
+        set_property('Current.IsFetched', True)
+        set_property('Today.IsFetched', True)
+        set_property('Detailed.IsFetched', True)
+        set_property('Daily.IsFetched', True)
+        set_property('Weekend.IsFetched', False)
+        set_property('36Hour.IsFetched', False)
+        set_property('Hourly.IsFetched', False)
     else:
         log('Unsupported command line argument!', xbmc.LOGERROR)
 

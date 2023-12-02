@@ -486,15 +486,3 @@ msgstr ""
 msgctxt "#32345"
 msgid "Choose location..."
 msgstr ""
-
-msgctxt "#10000"
-msgid "Berlin"
-msgstr ""
-
-msgctxt "#10001"
-msgid "Bramsche"
-msgstr ""
-
-msgctxt "#10002"
-msgid "Sonstwo"
-msgstr ""
