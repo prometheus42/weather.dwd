@@ -32,12 +32,15 @@
 					<visible>false</visible>
 				</setting>
 			</group>
-			<group id="2" label="32112">
+			<group id="2" label="32112" >
 				<setting id="Location2" type="action" label="32343" help="">
 					<level>0</level>
 					<control type="button" format="action">
 						<data>RunScript(weather.dwd, find_location, 2)</data>
 					</control>
+					<dependencies>
+						<dependency type="enable" operator="!is" setting="Location1ID"></dependency>
+					</dependencies>
 				</setting>
 				<setting id="Location2Name" type="string" label="32112" help="">
 					<level>0</level>
@@ -60,6 +63,9 @@
 						<heading>32117</heading>
 					</control>
 					<visible>false</visible>
+					<dependencies>
+						<dependency type="enable" operator="!is" setting="Location1ID"></dependency>
+					</dependencies>
 				</setting>
 			</group>
 			<group id="3" label="32113">
@@ -68,6 +74,9 @@
 					<control type="button" format="action">
 						<data>RunScript(weather.dwd, find_location, 3)</data>
 					</control>
+					<dependencies>
+						<dependency type="enable" operator="!is" setting="Location2ID"></dependency>
+					</dependencies>
 				</setting>
 				<setting id="Location3Name" type="string" label="32113" help="">
 					<level>0</level>
@@ -90,6 +99,9 @@
 						<heading>32118</heading>
 					</control>
 					<visible>false</visible>
+					<dependencies>
+						<dependency type="enable" operator="!is" setting="Location2ID"></dependency>
+					</dependencies>
 				</setting>
 			</group>
 			<group id="4" label="32114">
@@ -98,6 +110,9 @@
 					<control type="button" format="action">
 						<data>RunScript(weather.dwd, find_location, 4)</data>
 					</control>
+					<dependencies>
+						<dependency type="enable" operator="!is" setting="Location3ID"></dependency>
+					</dependencies>
 				</setting>
 				<setting id="Location4Name" type="string" label="32114" help="">
 					<level>0</level>
@@ -120,6 +135,9 @@
 						<heading>32119</heading>
 					</control>
 					<visible>false</visible>
+					<dependencies>
+						<dependency type="enable" operator="!is" setting="Location3ID"></dependency>
+					</dependencies>
 				</setting>
 			</group>
 		</category>
