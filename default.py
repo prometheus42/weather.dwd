@@ -498,6 +498,18 @@ def load_station_list():
     return station_list
 
 
+def get_coordinates_for_station(station_name):
+    """
+    Gets the coordinates for a weather station from the station list of the DWD.
+    """
+    l = load_station_list()
+    for s in l:
+        if station_name == s[1]:
+            lat = s[2]
+            lon = s[3]
+            return (lat, lon)
+
+
 def find_station_by_name(station_name):
     """
     Get the list of weather stations and filter for a given station name.
@@ -577,10 +589,9 @@ def main():
                 set_property('Current.Location', current_station_name)
                 set_property('Forecast.City', current_station_name)
                 set_property('Forecast.Country', 'Germany')
-                # set_property('Forecast.State', 'true')
-                # TODO: Get coordinates from station list.
-                # set_property('Forecast.Latitude', '')
-                # set_property('Forecast.Longitude', '')
+                lat, lon = get_coordinates_for_station(current_station_name)
+                set_property('Forecast.Latitude', lat)
+                set_property('Forecast.Longitude', lon)
         set_property('Locations', len(get_station_names()))
         # set flags
         set_property('DWD.IsFetched', True)
