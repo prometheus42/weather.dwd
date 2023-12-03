@@ -20,14 +20,14 @@
 						<heading>32111</heading>
 					</control>
 				</setting>
-				<setting id="Location1ID" type="string" label="32118" help="">
+				<setting id="Location1ID" type="string" label="32116" help=""> 
 					<level>0</level>
 					<default/>
 					<constraints>
 						<allowempty>true</allowempty>
 					</constraints>
 					<control type="edit" format="string">
-						<heading>32118</heading>
+						<heading>32116</heading>
 					</control>
 					<visible>false</visible>
 				</setting>
