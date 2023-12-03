@@ -180,3 +180,11 @@ msgstr "Suche nach Ort..."
 msgctxt "#32345"
 msgid "Choose location..."
 msgstr "Ort auswählen..."
+
+msgctxt "#32346"
+msgid "Station not found"
+msgstr "Keine Wetterstation gefunden"
+
+msgctxt "#32347"
+msgid "Could not find a station like that."
+msgstr "Konnte keine passende Wetterstation finden."

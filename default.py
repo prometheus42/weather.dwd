@@ -4,183 +4,26 @@ A Kodi Plugin for the German Weather Service (DWD) weather forecasts.
 
 import os
 import sys
-import csv
 from datetime import datetime
-
-import requests
 
 import xbmc
 import xbmcgui
 import xbmcvfs
 import xbmcaddon
 
+from resources.lib.utils import log
+from resources.lib.weather import DWD_ICON_MAPPING, get_wind_direction, get_icon_code_for_weather, get_icon_path_for_weather, calc_feels_like_temperature
+from resources.lib.dwd import fetch_weather_data, get_station_names, find_station_by_name, get_coordinates_for_station, div10, calc_time
+
 
 WEATHER_WINDOW = xbmcgui.Window(12600)
-WEATHER_ICON = xbmcvfs.translatePath('%s.png')
 
 ADDON = xbmcaddon.Addon()
 ADDONID = ADDON.getAddonInfo('id')
 LANGUAGE = ADDON.getLocalizedString
 DEBUG = ADDON.getSetting('Debug')
 
-DATEFORMAT = xbmc.getRegion('dateshort')
-TIMEFORMAT = xbmc.getRegion('meridiem')
-TEMPUNIT = xbmc.getRegion('tempunit')
-SPEEDUNIT = xbmc.getRegion('speedunit')
-DATEFORMAT = xbmc.getRegion('dateshort')
-TIMEFORMAT = xbmc.getRegion('meridiem')
-
 MAXDAYS = 10
-TIMEOUT = 10
-API_URL = 'https://app-prod-ws.warnwetter.de/v30/stationOverviewExtended?stationIds={station}'
-
-DWD_ICON_MAPPING = {
-    1: 'Sonne',
-    2: 'Sonne, leicht bewölkt',
-    3: 'Sonne, bewölkt',
-    4: 'Wolken',
-    5: 'Nebel',
-    6: 'Nebel, rutschgefahr',
-    7: 'leichter Regen',
-    8: 'Regen',
-    9: 'starker Regen',
-    10: 'leichter Regen, rutschgefahr',
-    11: 'starker Regen, rutschgefahr',
-    12: 'Regen, vereinzelt Schneefall',
-    13: 'Regen, vermehrt Schneefall',
-    14: 'leichter Schneefall',
-    15: 'Schneefall',
-    16: 'starker Schneefall',
-    17: 'Wolken, (Hagel)',
-    18: 'Sonne, leichter Regen',
-    19: 'Sonne, starker Regen',
-    20: 'Sonne, Regen, vereinzelter Schneefall',
-    21: 'Sonne, Regen, vermehrter Schneefall',
-    22: 'Sonne, vereinzelter Schneefall',
-    23: 'Sonne, vermehrter Schneefall',
-    24: 'Sonne, (Hagel)',
-    25: 'Sonne, (staker Hagel)',
-    26: 'Gewitter',
-    27: 'Gewitter, Regen',
-    28: 'Gewitter, starker Regen',
-    29: 'Gewitter, (Hagel)',
-    30: 'Gewitter, (starker Hagel)',
-    31: '(Wind)',
-    32767: 'not available'
-}
-
-DWD_TO_KODI_ICON_MAPPING = {
-    1: 32,  # Sonne -> clear (day)
-    # 1: 31, # Sonne -> clear (night)
-    # TODO: Choose correct icon depending on time of the day!
-    2: 30,  # Sonne, leicht bewölkt -> 'partly cloudy (day)'
-    # 2: 29,  # Sonne, leicht bewölkt -> 'partly cloudy (night)'
-    # 2: 44,  # Sonne, leicht bewölkt -> partly cloudy
-    3: 28,  # Sonne, bewölkt -> 'mostly cloudy (day)',
-    # 3: 27,  # Sonne, bewölkt -> 'mostly cloudy (night)',
-    4: 26,  # : 'cloudy',
-    5: 20,  # 'foggy',
-    6: 20,  # Nebel und Rutschgefahr
-    7: 9,  # Leichter Regen -> drizzle
-    8: 11,  # Regen -> showers
-    9: 12,  # Starker Regen -> showers
-    10: 8,  # leichter Regen, Rutschgefahr -> freezing drizzle
-    11: 10,  # Starker Regen, Rutschgefahr -> freezing rain
-    12: 6,  # 'Regen, vereinzelt Schneefall' -> mixed rain and sleet
-    13: 5,  # Regen, vermehrt Schneefall -> mixed rain and snow
-    14: 14,  # 'leichter Schneefall -> light snow showers
-    15: 16,  # Schneefall -> snow
-    16: 41,  # starker Schneefall -> heavy snow
-    17: 17,  # Wolken, (Hagel) -> hail
-    18: 9,  # Sonne, leichter Regen -> drizzle
-    19: 12,  # Sonne, starker Regen -> showers
-    20: 6,  # Sonne, Regen, vereinzelter Schneefall -> mixed rain and sleet
-    21: 5,  # Sonne, Regen, vermehrter Schneefall -> mixed rain and snow
-    24: 17,  # Sonne, (Hagel) -> hail
-    25: 17,  # Sonne, (staker Hagel) -> hail
-    26: 4,  # Gewitter -> thunderstorm
-    # 26: 37,  # Gewitter -> isolated thunderstorms
-    27: 47,  # Gewitter, Regen -> isolated thundershowers
-    28: 45,  # Gewitter, starker Regen -> thundershowers
-    29: 35,  # Gewitter, (Hagel) -> mixed rain and hail
-    30: 35,  # Gewitter, (starker Hagel) -> mixed rain and hail
-    31: 24,  # Wind -> windy
-    # 0:  'tornado',
-    # 1:  'tropical storm',
-    # 2:  'hurricane',
-    # 3:  'severe thunderstorms',
-    # 7:  'mixed snow and sleet',
-    # 13: 'snow flurries',
-    # 15: 'blowing snow',
-    # 18: 'sleet',
-    # 19: 'dust',
-    # 21: 'haze',
-    # 22: 'smoky',
-    # 23: 'blustery',
-    # 25: 'cold',
-    # 33: 'fair (night)',
-    # 34: 'fair (day)',
-    # 36: 'hot',
-    # 38: 'scattered thunderstorms',
-    # 39: 'scattered thunderstorms',
-    # 40: 'scattered showers',
-    # 42: 'scattered snow showers',
-    # 43: 'heavy snow',
-    # 46: 'snow showers',
-    # 47: 'isolated thundershowers',
-    # "na": 'not available',
-}
-
-
-def get_wind_direction(deg):
-    """
-    Convert degrees on the compass to the correct label.
-
-    Source: https://github.com/randallspicher/weather.noaa/blob/master/resources/lib/utils.py
-    """
-    if deg >= 349 or deg <= 11:
-        return 71
-    elif deg >= 12 and deg <= 33:
-        return 72
-    elif deg >= 34 and deg <= 56:
-        return 73
-    elif deg >= 57 and deg <= 78:
-        return 74
-    elif deg >= 79 and deg <= 101:
-        return 75
-    elif deg >= 102 and deg <= 123:
-        return 76
-    elif deg >= 124 and deg <= 146:
-        return 77
-    elif deg >= 147 and deg <= 168:
-        return 78
-    elif deg >= 169 and deg <= 191:
-        return 79
-    elif deg >= 192 and deg <= 213:
-        return 80
-    elif deg >= 214 and deg <= 236:
-        return 81
-    elif deg >= 237 and deg <= 258:
-        return 82
-    elif deg >= 259 and deg <= 281:
-        return 83
-    elif deg >= 282 and deg <= 303:
-        return 84
-    elif deg >= 304 and deg <= 326:
-        return 85
-    elif deg >= 327 and deg <= 348:
-        return 86
-
-
-def log(txt, level=xbmc.LOGDEBUG):
-    """
-    Log a message with a given log level.
-
-    Source: https://github.com/randallspicher/weather.noaa/blob/master/resources/lib/utils.py
-    """
-    # if DEBUG:
-    message = f'{ADDONID}: {txt}'
-    xbmc.log(msg=message, level=level)
 
 
 def set_property(name, value):
@@ -214,128 +57,7 @@ def clear():
         set_property(f'Day{i}.FanartCode', 'na')
 
 
-def div10(text):
-    """
-    Convert most values from DWD by dividing by 10 and returning it as a integer.
-    """
-    try:
-        return int(text) / 10.
-    except ValueError:
-        return 0.0
-
-
-def get_first_valid_value(value_list):
-    """
-    Get the first valid value in the list provided by DWD. Sometimes a value is
-    not available and the number 32767 is delivered instead. In these cases the
-    next valid number is returned.
-    """
-    for v in value_list:
-        if v != 32767:
-            return v
-
-
-def calc_feels_like_temperature(T=10, V=25):
-    """ 
-    The formula to calculate the equivalent temperature related to the wind chill is:
-        T(REF) = 13.12 + 0.6215 * T - 11.37 * V**0.16 + 0.3965 * T * V**0.16
-    Or:
-        T(REF): is the equivalent temperature in degrees Celsius
-    V: is the wind speed in km/h measured at 10m height
-    T: is the temperature of the air in degrees Celsius
-
-    Source: http://zpag.tripod.com/Meteo/eolien.htm
-    Source: https://forum.kodi.tv/showthread.php?tid=114637&pid=937168#pid937168
-    """
-    feels_like = T
-    # Wind speeds of 4 mph or less, the wind chill temperature is the same as
-    # the actual air temperature.
-    if round((V + .0) / 1.609344) > 4:
-        feels_like = (13.12 + (0.6215 * T) -
-                      (11.37 * V**0.16) + (0.3965 * T * V**0.16))
-    return str(round(feels_like))
-
-
-def get_station_ids():
-    """
-    Get all station IDs from the Kodi settings.
-    """
-    station_ids = [ADDON.getSetting('Location1ID'), ADDON.getSetting(
-        'Location2ID'), ADDON.getSetting('Location3ID'), ADDON.getSetting('Location4ID')]
-    station_ids = list(filter(None, station_ids))
-    log(f'Stations for which to fetch data: {station_ids}')
-    return station_ids
-
-
-def get_station_names():
-    """
-    Get all station names from the Kodi settings.
-    """
-    station_names = [ADDON.getSetting('Location1Name'), ADDON.getSetting(
-        'Location2Name'), ADDON.getSetting('Location3Name'), ADDON.getSetting('Location4Name')]
-    station_names = list(filter(None, station_names))
-    log(f'Getting station names: {station_names}')
-    return station_names
-
-
-def fetch_weather_data(no):
-    """
-    Fetches weather data from DWD for all given station IDs.
-    """
-    log('Fetching weather info...')
-    station_ids = get_station_ids()
-    r = requests.get(API_URL.format(
-        station=','.join(station_ids)), timeout=TIMEOUT)
-    weather_data = r.json()
-    marshal_weather_data(weather_data[station_ids[no-1]])
-    marshal_alert_data(weather_data[station_ids[no-1]])
-
-
-def get_icon_code_for_weather(icon_no, day=True):
-    """
-    Evaluates the icon number from the DWD and chooses the fitting icon code
-    from the icons provided by Kodi.
-    """
-    if isinstance(icon_no, str):
-        icon_no = int(icon_no)
-    condition_icon_no = DWD_TO_KODI_ICON_MAPPING[icon_no]
-    # correct icon if it is night
-    if icon_no == 1 and not day:
-        condition_icon_no = 31
-    if icon_no == 2 and not day:
-        condition_icon_no = 29
-    if icon_no == 3 and not day:
-        condition_icon_no = 27
-    return condition_icon_no
-
-
-def get_icon_path_for_weather(icon_no, day=True):
-    """
-    Evaluates the icon number from the DWD and gets the icon code and provides
-    a file path to a fitting icon provided by Kodi.
-    """
-    condition_icon_no = get_icon_code_for_weather(icon_no, day=day)
-    # condition_icon_file = xbmcvfs.translatePath(os.path.join(
-    #    'resource://', 'resource.images.weathericons.default', f'{condition_icon_no}.png'))
-    # condition_icon_file = xbmcvfs.translatePath(os.path.join(
-    #    'special://home', 'addons', 'resource.images.weathericons.default', 'resources', f'{condition_icon_no}.png'))
-    condition_icon_file = f'{condition_icon_no}.png'
-    return condition_icon_file
-
-
-def calc_time(timestamp):
-    """
-    Format the timestamp from DWD in the valid format for Kodi.
-    """
-    try:
-        timestamp = int(timestamp) / 1000
-        dt = datetime.fromtimestamp(timestamp)
-        return str(dt)
-    except ValueError:
-        return ''
-
-
-def marshal_weather_data(weather_data):
+def set_properties_for_weather_data(weather_data):
     """
     Set properties for a single weather station for today and the next days.
 
@@ -385,8 +107,8 @@ def marshal_weather_data(weather_data):
     set_property('Current.WindDirection', xbmc.getLocalizedString(
         get_wind_direction(wind_direction)))
     # calculate feels like temperature
-    set_property('Current.FeelsLike',  calc_feels_like_temperature(
-        div10(get_first_valid_value(current_data["temperature"])), div10(weather_data['days'][0]['windSpeed'])))
+    set_property('Current.FeelsLike',  calc_feels_like_temperature(div10(
+        current_data['temperature'][current_hour]), div10(weather_data['days'][0]['windSpeed'])))
     # fill in the forecast for the next days
     for no, day in enumerate(weather_data['days']):
         # Day0.xxx - Day6.xxx
@@ -434,7 +156,7 @@ def marshal_weather_data(weather_data):
     # Hourly.1.xxx - Hourly.24.xxx, 36Hour.1.xxx - 36Hour.3.xxx, Weekend.1.xxx - Weekend.2.xxx
 
 
-def marshal_alert_data(weather_data):
+def set_properties_for_alert_data(weather_data):
     """
     Marshal any weather alerts for a given location.
     """
@@ -466,61 +188,7 @@ def marshal_alert_data(weather_data):
         log('No current weather alerts.', level=xbmc.LOGDEBUG)
 
 
-def check_station_list(station_list):
-    """
-    The official station list of the DWD [1] contains some stations for which
-    no weather data is provided. So we check a station list by requesting data
-    for each entry and reject it if the response is empty.
-
-    [1] https://www.dwd.de/DE/leistungen/met_verfahren_mosmix/mosmix_stationskatalog.cfg
-    """
-    new_station_list = []
-    for s in station_list:
-        r = requests.get(API_URL.format(station=s[0]), timeout=10)
-        if r.json():
-            new_station_list.append(s)
-    return new_station_list
-
-
-def load_station_list():
-    """
-    Load list of weather stations from a CSV file and return it.
-    """
-    filename = xbmcvfs.translatePath(os.path.join(
-        ADDON.getAddonInfo('path'), 'resources', 'station_list.csv'))
-    station_list = []
-    with open(filename, newline='', encoding='utf8') as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=';')
-        for row in reader:
-            # TODO: Find a better station list without mojibake (65533)!
-            station_name = row['NAME'].replace(chr(65533), '')
-            station_list.append((row['ID'], station_name.title(), row['LAT'], row['LON']))
-    return station_list
-
-
-def get_coordinates_for_station(station_name):
-    """
-    Gets the coordinates for a weather station from the station list of the DWD.
-    """
-    l = load_station_list()
-    for s in l:
-        if station_name == s[1]:
-            lat = s[2]
-            lon = s[3]
-            return (lat, lon)
-
-
-def find_station_by_name(station_name):
-    """
-    Get the list of weather stations and filter for a given station name.
-    """
-    station_list = load_station_list()
-    # TODO: Check whether to use SequenceMatcher from difflib or other algorithms like Levenshtein Distance.
-    station_list = [s for s in station_list if station_name.casefold() in s[1].casefold()]
-    return check_station_list(station_list)
-
-
-def find_location(location_no):
+def start_find_location_dialog(location_no):
     """
     Find all locations from a station list of the DWD by searching for a keyword.
     """
@@ -530,7 +198,7 @@ def find_location(location_no):
         found_stations = find_station_by_name(keyword)
         labels = [s[1] for s in found_stations]
         if labels:
-            selected = dialog_select('Choose a location...', labels)
+            selected = dialog_select(xbmc.getLocalizedString(32345), labels)
             log(f'Selected: {selected}')
             if selected != -1:
                 selected_location = found_stations[selected]
@@ -542,7 +210,7 @@ def find_location(location_no):
                 ADDON.setSetting(
                     f'Location{location_no}Name', selected_location[1])
         else:
-            xbmcgui.Dialog().ok('Station not found', 'Could not find a station like that')
+            xbmcgui.Dialog().ok(xbmc.getLocalizedString(32346), xbmc.getLocalizedString(32347))
 
 
 def dialog_select(heading, _list, **kwargs):
@@ -573,11 +241,13 @@ def main():
     log(f'{ADDON.getAddonInfo("name")} version {ADDON.getAddonInfo("version")} started with argv: {sys.argv}')
     if sys.argv[1] == 'find_location':
         log('find_location: ' + sys.argv[2])
-        find_location(sys.argv[2])
+        start_find_location_dialog(sys.argv[2])
     elif sys.argv[1] in ('1', '2', '3', '4'):
         location_no = int(sys.argv[1])
         log(f'Fetching weather for location no. {location_no}')
-        fetch_weather_data(location_no)
+        weather_data = fetch_weather_data(location_no)
+        set_properties_for_weather_data(weather_data)
+        set_properties_for_alert_data(weather_data)
         set_property('WeatherProvider', 'DWD')
         set_property('WeatherProviderLogo', xbmcvfs.translatePath(os.path.join(
             ADDON.getAddonInfo('path'), 'resources', 'media', 'dwd-logo-png.png')))

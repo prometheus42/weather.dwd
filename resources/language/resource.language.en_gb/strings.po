@@ -184,3 +184,11 @@ msgstr ""
 msgctxt "#32345"
 msgid "Choose location..."
 msgstr ""
+
+msgctxt "#32346"
+msgid "Station not found"
+msgstr ""
+
+msgctxt "#32347"
+msgid "Could not find a station like that."
+msgstr ""
