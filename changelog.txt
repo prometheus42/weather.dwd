@@ -1,3 +1,6 @@
+v0.4.0
+- Cleaned up translations.
+- Fixed error with forecast.
 v0.3.0
 - Fixed some label names and data conversions. 
 - Added icon paths for weather conditions.

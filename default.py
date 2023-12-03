@@ -388,7 +388,7 @@ def marshal_weather_data(weather_data):
     set_property('Current.FeelsLike',  calc_feels_like_temperature(
         div10(get_first_valid_value(current_data["temperature"])), div10(weather_data['days'][0]['windSpeed'])))
     # fill in the forecast for the next days
-    for no, day in enumerate(weather_data['days'][1:]):
+    for no, day in enumerate(weather_data['days']):
         # Day0.xxx - Day6.xxx
         set_property(f'Day{no}.Title', day['dayDate'])
         set_property(f'Day{no}.HighTemp', div10(day['temperatureMax']))
