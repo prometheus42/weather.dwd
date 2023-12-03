@@ -36,8 +36,10 @@ def find_station_by_name(station_name):
     """
     station_list = load_station_list()
     # TODO: Check whether to use SequenceMatcher from difflib or other algorithms like Levenshtein Distance.
+    query = station_name.casefold().replace(
+        'ä', 'ae').replace('ö', 'oe').replace('ü', 'ue')
     station_list = [
-        s for s in station_list if station_name.casefold() in s[1].casefold()]
+        s for s in station_list if query in s[1].casefold()]
     return check_station_list(station_list)
 
 

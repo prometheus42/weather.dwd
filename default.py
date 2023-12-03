@@ -210,7 +210,7 @@ def start_find_location_dialog(location_no):
                 ADDON.setSetting(
                     f'Location{location_no}Name', selected_location[1])
         else:
-            xbmcgui.Dialog().ok(xbmc.getLocalizedString(32346), xbmc.getLocalizedString(32347))
+            xbmcgui.Dialog().ok(LANGUAGE(32346), LANGUAGE(32347))
 
 
 def dialog_select(heading, _list, **kwargs):
