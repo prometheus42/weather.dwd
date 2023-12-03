@@ -493,8 +493,8 @@ def load_station_list():
         reader = csv.DictReader(csvfile, delimiter=';')
         for row in reader:
             # TODO: Find a better station list without mojibake (65533)!
-            station_list.append(
-                (row['ID'], row['NAME'].replace(chr(65533), '').title()))
+            station_name = row['NAME'].replace(chr(65533), '')
+            station_list.append((row['ID'], station_name.title(), row['LAT'], row['LON']))
     return station_list
 
 
@@ -504,7 +504,7 @@ def find_station_by_name(station_name):
     """
     station_list = load_station_list()
     # TODO: Check whether to use SequenceMatcher from difflib or other algorithms like Levenshtein Distance.
-    station_list = [s for s in station_list if station_name in s[1]]
+    station_list = [s for s in station_list if station_name.casefold() in s[1].casefold()]
     return check_station_list(station_list)
 
 
