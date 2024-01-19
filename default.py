@@ -28,6 +28,12 @@ DEBUG = ADDON.getSetting('Debug')
 MAXDAYS = 10
 SHELVE_FILE = xbmcvfs.translatePath(os.path.join(ADDON.getAddonInfo('profile'), 'weather.data'))
 
+TEMP_UNIT = xbmc.getRegion('tempunit')
+SPEED_UNIT = xbmc.getRegion('speedunit')
+DATE_SHORT_FORMAT = xbmc.getRegion('dateshort')
+DATE_LONG_FORMAT = xbmc.getRegion('datelong')
+TIME_FORMAT = xbmc.getRegion('time')
+
 
 def set_property(name, value):
     """Set a property on the weather window object."""
@@ -93,9 +99,11 @@ def set_properties_for_weather_data(weather_data):
         current_data['surfacePressure'][current_hour]))
     set_property('Current.Precipitation',
                  current_data['precipitationTotal'][current_hour])
-    sunrise = calc_time(weather_data['days'][0]['sunrise'])
+    sunrise = calc_time(
+        weather_data['days'][0]['sunrise'], f'{DATE_SHORT_FORMAT} {TIME_FORMAT}')
     set_property('Today.Sunrise', sunrise)
-    sunset = calc_time(weather_data['days'][0]['sunset'])
+    sunset = calc_time(
+        weather_data['days'][0]['sunset'], f'{DATE_SHORT_FORMAT} {TIME_FORMAT}')
     set_property('Today.Sunset', sunset)
     set_property('Today.HighTemp', weather_data['days'][0]['temperatureMax'])
     set_property('Today.LowTemp', weather_data['days'][0]['temperatureMin'])
@@ -114,8 +122,9 @@ def set_properties_for_weather_data(weather_data):
         current_data['temperature'][current_hour]), div10(weather_data['days'][0]['windSpeed'])))
     # fill in the forecast for the next days
     for no, day in enumerate(weather_data['days']):
+        dt = datetime.fromisoformat(day['dayDate'])
         # Day0.xxx - Day6.xxx
-        set_property(f'Day{no}.Title', day['dayDate'])
+        set_property(f'Day{no}.Title', dt.strftime(DATE_SHORT_FORMAT))
         set_property(f'Day{no}.HighTemp', div10(day['temperatureMax']))
         set_property(f'Day{no}.LowTemp', div10(day['temperatureMin']))
         set_property(f'Day{no}.Outlook', DWD_ICON_MAPPING[day['icon']])
@@ -123,7 +132,6 @@ def set_properties_for_weather_data(weather_data):
                      get_icon_path_for_weather(day['icon']))
         set_property(f'Day{no}.FanartCode', 'na')
         # Daily.1.xxx - Daily.10.xxx
-        dt = datetime.fromisoformat(day['dayDate'])
         set_property(f'Daily.{no}.LongDay', dt.strftime('%A'))
         set_property(f'Daily.{no}.ShortDay', dt.strftime('%a'))
         set_property(f'Daily.{no}.LongDate', dt.strftime('%d. %B'))
@@ -278,7 +286,8 @@ def main():
                     set_property('Current.Location', current_station_name)
                     set_property('Forecast.City', current_station_name)
                     set_property('Forecast.Country', 'Germany')
-                    lat, lon = get_coordinates_for_station(current_station_name)
+                    lat, lon = get_coordinates_for_station(
+                        current_station_name)
                     set_property('Forecast.Latitude', lat)
                     set_property('Forecast.Longitude', lon)
             set_property('Locations', len(get_station_names()))

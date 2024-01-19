@@ -116,16 +116,14 @@ def get_coordinates_for_station(station_name):
             return (lat, lon)
 
 
-def calc_time(timestamp):
+def calc_time(timestamp, datetimeformat):
     """
     Format the timestamp from DWD in the valid format for Kodi.
     """
     try:
         timestamp = int(timestamp) / 1000
         dt = datetime.fromtimestamp(timestamp)
-        # TODO: Check whether the date format is correct.
-        # iso_fmt = '%Y-%m-%dT%H:%M:%S%z'
-        return str(dt)
+        return dt.strftime(datetimeformat)
     except ValueError:
         return ''
 
