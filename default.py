@@ -4,7 +4,9 @@ A Kodi Plugin for the German Weather Service (DWD) weather forecasts.
 
 import os
 import sys
+import shelve
 from datetime import datetime
+from datetime import timedelta
 
 import xbmc
 import xbmcgui
@@ -24,6 +26,7 @@ LANGUAGE = ADDON.getLocalizedString
 DEBUG = ADDON.getSetting('Debug')
 
 MAXDAYS = 10
+SHELVE_FILE = xbmcvfs.translatePath(os.path.join(ADDON.getAddonInfo('profile'), 'weather.data'))
 
 
 def set_property(name, value):
@@ -239,42 +242,32 @@ def main():
     Start the weather addon for Kodi.
     """
     log(f'{ADDON.getAddonInfo("name")} version {ADDON.getAddonInfo("version")} started with argv: {sys.argv}')
+    data_shelf = shelve.open(SHELVE_FILE)
     if sys.argv[1] == 'find_location':
         log('find_location: ' + sys.argv[2])
         start_find_location_dialog(sys.argv[2])
     elif sys.argv[1] in ('1', '2', '3', '4'):
         location_no = int(sys.argv[1])
         log(f'Fetching weather for location no. {location_no}')
-        weather_data = fetch_weather_data(location_no)
-        set_properties_for_weather_data(weather_data)
-        set_properties_for_alert_data(weather_data)
-        set_property('WeatherProvider', 'DWD')
-        set_property('WeatherProviderLogo', xbmcvfs.translatePath(os.path.join(
-            ADDON.getAddonInfo('path'), 'resources', 'media', 'dwd-logo-png.png')))
-        # set location information
-        for count, name in enumerate(get_station_names(), start=1):
-            set_property(f'Location{count}', name)
-            if count == location_no:
-                current_station_name = get_station_names()[location_no-1]
-                set_property('Current.Location', current_station_name)
-                set_property('Forecast.City', current_station_name)
-                set_property('Forecast.Country', 'Germany')
-                lat, lon = get_coordinates_for_station(current_station_name)
-                set_property('Forecast.Latitude', lat)
-                set_property('Forecast.Longitude', lon)
-        set_property('Locations', len(get_station_names()))
-        # set flags
-        set_property('DWD.IsFetched', True)
-        set_property('Forecast.IsFetched', True)
-        set_property('Current.IsFetched', True)
-        set_property('Today.IsFetched', True)
-        set_property('Detailed.IsFetched', True)
-        set_property('Daily.IsFetched', True)
-        set_property('Weekend.IsFetched', False)
-        set_property('36Hour.IsFetched', False)
-        set_property('Hourly.IsFetched', False)
+        try:
+            lastupdatekey = 'dwd_lastupdate'
+            weatherdatakey = 'dwd_weatherdata'
+            # get weather data...
+            if lastupdatekey not in data_shelf or (datetime.now() - data_shelf[lastupdatekey]) > timedelta(hours=1):
+                # ...from DWD API if shelved data is stale
+                log('Stored weather data is older than 1 hours!')
+                weather_data = fetch_weather_data(location_no)
+                log(f'Storing weather data at {datetime.now()} in shelf.')
+                data_shelf[lastupdatekey] = datetime.now()
+                data_shelf[weatherdatakey] = weather_data
+            else:
+                # ...from stored data otherwise
+                log('Getting weather data from shelf.')
+                weather_data = data_shelf[weatherdatakey]
+            # evaluate weather data and set properties for Kodi
     else:
         log('Unsupported command line argument!', xbmc.LOGERROR)
+    data_shelf.close()
 
 
 main()

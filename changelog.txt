@@ -1,3 +1,6 @@
+v0.6.0
+- Fixed problem if no station was selected.
+- Added cache for weather data.
 v0.5.0
 - Refactored addon.
 v0.4.0
