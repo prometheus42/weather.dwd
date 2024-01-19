@@ -17,6 +17,10 @@ TIMEOUT = 10
 API_URL = 'https://app-prod-ws.warnwetter.de/v30/stationOverviewExtended?stationIds={station}'
 
 
+class DWDException(Exception):
+    pass
+
+
 def fetch_weather_data(no):
     """
     Fetches weather data from DWD for a given weather station identified by the
@@ -24,6 +28,8 @@ def fetch_weather_data(no):
     """
     log('Fetching weather info...')
     station_ids = get_station_ids()
+    if not station_ids:
+        raise DWDException('No weather station was selected.')
     r = requests.get(API_URL.format(
         station=','.join(station_ids)), timeout=TIMEOUT)
     weather_data = r.json()

@@ -15,7 +15,7 @@ import xbmcaddon
 
 from resources.lib.utils import log
 from resources.lib.weather import DWD_ICON_MAPPING, get_wind_direction, get_icon_code_for_weather, get_icon_path_for_weather, calc_feels_like_temperature
-from resources.lib.dwd import fetch_weather_data, get_station_names, find_station_by_name, get_coordinates_for_station, div10, calc_time
+from resources.lib.dwd import fetch_weather_data, get_station_names, find_station_by_name, get_coordinates_for_station, div10, calc_time, DWDException
 
 
 WEATHER_WINDOW = xbmcgui.Window(12600)
@@ -265,6 +265,35 @@ def main():
                 log('Getting weather data from shelf.')
                 weather_data = data_shelf[weatherdatakey]
             # evaluate weather data and set properties for Kodi
+            set_properties_for_weather_data(weather_data)
+            set_properties_for_alert_data(weather_data)
+            set_property('WeatherProvider', 'DWD')
+            set_property('WeatherProviderLogo', xbmcvfs.translatePath(os.path.join(
+                ADDON.getAddonInfo('path'), 'resources', 'media', 'dwd-logo-png.png')))
+            # set location information
+            for count, name in enumerate(get_station_names(), start=1):
+                set_property(f'Location{count}', name)
+                if count == location_no:
+                    current_station_name = get_station_names()[location_no-1]
+                    set_property('Current.Location', current_station_name)
+                    set_property('Forecast.City', current_station_name)
+                    set_property('Forecast.Country', 'Germany')
+                    lat, lon = get_coordinates_for_station(current_station_name)
+                    set_property('Forecast.Latitude', lat)
+                    set_property('Forecast.Longitude', lon)
+            set_property('Locations', len(get_station_names()))
+            # set flags
+            set_property('DWD.IsFetched', True)
+            set_property('Forecast.IsFetched', True)
+            set_property('Current.IsFetched', True)
+            set_property('Today.IsFetched', True)
+            set_property('Detailed.IsFetched', True)
+            set_property('Daily.IsFetched', True)
+            set_property('Weekend.IsFetched', False)
+            set_property('36Hour.IsFetched', False)
+            set_property('Hourly.IsFetched', False)
+        except DWDException as e:
+            log(f'Could not get weather information: {e}')
     else:
         log('Unsupported command line argument!', xbmc.LOGERROR)
     data_shelf.close()
