@@ -192,3 +192,13 @@ msgstr ""
 msgctxt "#32347"
 msgid "Could not find a station like that."
 msgstr ""
+
+###
+
+msgctxt "#32350"
+msgid "Addon settings"
+msgstr ""
+
+msgctxt "#32351"
+msgid "Cache lifetime"
+msgstr ""

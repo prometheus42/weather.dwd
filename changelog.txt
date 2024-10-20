@@ -1,6 +1,11 @@
+v0.7.0
+- Changed default cache lifetime.
+- Provided setting for cache lifetime.
+- Fixed some error with caching of weather data.
 v0.6.0
 - Fixed problem if no station was selected.
 - Added cache for weather data.
+- Used locale date format for all dates.
 v0.5.0
 - Refactored addon.
 v0.4.0

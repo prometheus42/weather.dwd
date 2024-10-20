@@ -14,26 +14,43 @@ from resources.lib.utils import log
 ADDON = xbmcaddon.Addon()
 
 TIMEOUT = 10
-API_URL = 'https://app-prod-ws.warnwetter.de/v30/stationOverviewExtended?stationIds={station}'
+# Source for URLs: https://invent.kde.org/plasma/plasma-workspace/-/blob/Plasma/6.2/dataengines/weather/ions/dwd/ion_dwd.h?ref_type=heads
+FORECAST_URL = 'https://app-prod-ws.warnwetter.de/v30/stationOverviewExtended?stationIds={station}'
+MEASURE_URL = 'https://s3.eu-central-1.amazonaws.com/app-prod-static.warnwetter.de/v16/current_measurement_{station}.json'
 
 
 class DWDException(Exception):
     pass
 
 
-def fetch_weather_data(no):
+def fetch_forecast_data():
     """
-    Fetches weather data from DWD for a given weather station identified by the
-    location no.
+    Fetches weather forecast data from DWD for all given weather station
+    identified by their station ids that are stored in the Kodi settings.
     """
     log('Fetching weather info...')
     station_ids = get_station_ids()
     if not station_ids:
         raise DWDException('No weather station was selected.')
-    r = requests.get(API_URL.format(
+    r = requests.get(FORECAST_URL.format(
         station=','.join(station_ids)), timeout=TIMEOUT)
     weather_data = r.json()
-    return weather_data[station_ids[no-1]]
+    return {no: weather_data[station_id] for no, station_id in enumerate(station_ids, start=1)}
+
+
+def fetch_current_weather_data(station_no):
+    """
+    Fetches current weather data from DWD for a given weather station
+    identified by the location no.
+    """
+    log('Fetching weather info...')
+    station_ids = get_station_ids()
+    if not station_ids:
+        raise DWDException('No weather station was selected.')
+    r = requests.get(MEASURE_URL.format(
+        station=station_ids[station_no-1]), timeout=TIMEOUT)
+    weather_data = r.json()
+    return weather_data
 
 
 def find_station_by_name(station_name):
@@ -44,8 +61,7 @@ def find_station_by_name(station_name):
     # TODO: Check whether to use SequenceMatcher from difflib or other algorithms like Levenshtein Distance.
     query = station_name.casefold().replace(
         'ä', 'ae').replace('ö', 'oe').replace('ü', 'ue')
-    station_list = [
-        s for s in station_list if query in s[1].casefold()]
+    station_list = [s for s in station_list if query in s[1].casefold()]
     return check_station_list(station_list)
 
 
@@ -59,7 +75,7 @@ def check_station_list(station_list):
     """
     new_station_list = []
     for s in station_list:
-        r = requests.get(API_URL.format(station=s[0]), timeout=10)
+        r = requests.get(FORECAST_URL.format(station=s[0]), timeout=10)
         if r.json():
             new_station_list.append(s)
     return new_station_list

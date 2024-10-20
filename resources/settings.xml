@@ -20,7 +20,7 @@
 						<heading>32111</heading>
 					</control>
 				</setting>
-				<setting id="Location1ID" type="string" label="32116" help=""> 
+				<setting id="Location1ID" type="string" label="32116" help="">
 					<level>0</level>
 					<default/>
 					<constraints>
@@ -32,7 +32,7 @@
 					<visible>false</visible>
 				</setting>
 			</group>
-			<group id="2" label="32112" >
+			<group id="2" label="32112">
 				<setting id="Location2" type="action" label="32343" help="">
 					<level>0</level>
 					<control type="button" format="action">
@@ -138,6 +138,17 @@
 					<dependencies>
 						<dependency type="enable" operator="!is" setting="Location3ID"></dependency>
 					</dependencies>
+				</setting>
+			</group>
+		</category>
+		<category id="addon settings" label="32350" help="">
+			<group id="1" label="32350">
+				<setting id="CacheLifetime" type="integer" label="32351" help="">
+					<level>0</level>
+					<default>3</default>
+					<control type="edit" format="integer">
+						<heading>32351</heading>
+					</control>
 				</setting>
 			</group>
 		</category>

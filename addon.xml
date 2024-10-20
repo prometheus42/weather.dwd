@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="weather.dwd" name="DWD (Deutscher Wetterdienst)" version="0.6.0" provider-name="prometheus42">
+<addon id="weather.dwd" name="DWD (Deutscher Wetterdienst)" version="0.7.0" provider-name="prometheus42">
 	<requires>
 		<import addon="xbmc.python" version="3.0.0"/>
 		<import addon="script.module.requests"/>

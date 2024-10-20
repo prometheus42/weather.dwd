@@ -188,3 +188,13 @@ msgstr "Keine Wetterstation gefunden"
 msgctxt "#32347"
 msgid "Could not find a station like that."
 msgstr "Konnte keine passende Wetterstation finden."
+
+###
+
+msgctxt "#32350"
+msgid "Addon settings"
+msgstr "Addon-Einstellungen"
+
+msgctxt "#32351"
+msgid "Cache lifetime"
+msgstr "Gültigkeitsdauer des Cache"
