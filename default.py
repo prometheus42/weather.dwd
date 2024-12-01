@@ -27,8 +27,7 @@ DEBUG = ADDON.getSetting('Debug')
 
 MAXDAYS = 10
 CACHE_LIFETIME = 3  # time in hours after which cache content is discarded
-SHELVE_FILE = xbmcvfs.translatePath(os.path.join(
-    ADDON.getAddonInfo('profile'), 'weather.data'))
+SHELVE_FILE = '/tmp/weather.data'
 
 TEMP_UNIT = xbmc.getRegion('tempunit')
 SPEED_UNIT = xbmc.getRegion('speedunit')
@@ -251,8 +250,7 @@ def main():
     """
     Start the weather addon for Kodi.
     """
-    log(f'{ADDON.getAddonInfo("name")} version {
-        ADDON.getAddonInfo("version")} started with argv: {sys.argv}')
+    log(f'{ADDON.getAddonInfo("name")} version {ADDON.getAddonInfo("version")} started with argv: {sys.argv}')
     global CACHE_LIFETIME
     CACHE_LIFETIME = int(ADDON.getSetting('CacheLifetime'))
     log(f'Setting cache lifetime to {CACHE_LIFETIME} hours.')
@@ -270,8 +268,7 @@ def main():
             if lastupdatekey not in data_shelf \
                     or (datetime.now() - data_shelf[lastupdatekey]) > timedelta(hours=CACHE_LIFETIME):
                 # ...from DWD API if shelved data is stale
-                log(f'Stored weather data is older than {
-                    CACHE_LIFETIME} hours!')
+                log(f'Stored weather data is older than {CACHE_LIFETIME} hours!')
                 weather_data = fetch_forecast_data()
                 print(weather_data)
                 log(f'Storing weather data at {datetime.now()} in shelf.')
