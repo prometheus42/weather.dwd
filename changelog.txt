@@ -1,3 +1,6 @@
+v0.7.1
+- fix some syntax errors on python 3.11
+- check addon_data path exists
 v0.7.0
 - Changed default cache lifetime.
 - Provided setting for cache lifetime.
