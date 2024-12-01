@@ -27,7 +27,8 @@ DEBUG = ADDON.getSetting('Debug')
 
 MAXDAYS = 10
 CACHE_LIFETIME = 3  # time in hours after which cache content is discarded
-SHELVE_FILE = '/tmp/weather.data'
+SHELVE_FILE = xbmcvfs.translatePath(os.path.join(
+    ADDON.getAddonInfo('profile'), 'weather.data'))
 
 TEMP_UNIT = xbmc.getRegion('tempunit')
 SPEED_UNIT = xbmc.getRegion('speedunit')
@@ -254,7 +255,13 @@ def main():
     global CACHE_LIFETIME
     CACHE_LIFETIME = int(ADDON.getSetting('CacheLifetime'))
     log(f'Setting cache lifetime to {CACHE_LIFETIME} hours.')
-    data_shelf = shelve.open(SHELVE_FILE)
+    try:
+        data_shelf = shelve.open(SHELVE_FILE)
+    except FileNotFoundError:
+        log(f"{SHELVE_FILE} doesn't exists, crating path")
+        os.makedirs(SHELVE_FILE)
+        data_shelf = shelve.open(SHELVE_FILE)
+
     if sys.argv[1] == 'find_location':
         log('find_location: ' + sys.argv[2])
         start_find_location_dialog(sys.argv[2])
