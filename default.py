@@ -251,12 +251,17 @@ def main():
     """
     Start the weather addon for Kodi.
     """
-    log(f'{ADDON.getAddonInfo("name")} version {
-        ADDON.getAddonInfo("version")} started with argv: {sys.argv}')
+    log(f'{ADDON.getAddonInfo("name")} version {ADDON.getAddonInfo("version")} started with argv: {sys.argv}')
     global CACHE_LIFETIME
     CACHE_LIFETIME = int(ADDON.getSetting('CacheLifetime'))
     log(f'Setting cache lifetime to {CACHE_LIFETIME} hours.')
-    data_shelf = shelve.open(SHELVE_FILE)
+    try:
+        data_shelf = shelve.open(SHELVE_FILE)
+    except FileNotFoundError:
+        log(f"{SHELVE_FILE} doesn't exists, crating path")
+        os.makedirs(SHELVE_FILE)
+        data_shelf = shelve.open(SHELVE_FILE)
+
     if sys.argv[1] == 'find_location':
         log('find_location: ' + sys.argv[2])
         start_find_location_dialog(sys.argv[2])
@@ -270,8 +275,7 @@ def main():
             if lastupdatekey not in data_shelf \
                     or (datetime.now() - data_shelf[lastupdatekey]) > timedelta(hours=CACHE_LIFETIME):
                 # ...from DWD API if shelved data is stale
-                log(f'Stored weather data is older than {
-                    CACHE_LIFETIME} hours!')
+                log(f'Stored weather data is older than {CACHE_LIFETIME} hours!')
                 weather_data = fetch_forecast_data()
                 print(weather_data)
                 log(f'Storing weather data at {datetime.now()} in shelf.')
