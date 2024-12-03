@@ -1,11 +1,26 @@
-# weather.dwd - A Kodi Plugin for the German Weather Service (DWD) weather forecasts
+# weather.dwd - A Kodi Plugin for the German weather service (DWD) weather forecasts
 
-This Kodi plugin fetches weather reports from the German Weather Service (DWD)
-provided for the WarnWetter app. Note that the DWD only provides weather
-forecasts for Germany.
+This Kodi addon fetches weather reports from the German weather service.
 
-All weather stations for which information can be obtained can be found in this
-list: https://www.dwd.de/DE/leistungen/met_verfahren_mosmix/mosmix_stationskatalog.cfg
+The weather data for this addon are provided by the Deutscher Wetterdienst
+(DWD) for the use in the official WarnWetter app. It provides weather forecasts
+mainly for Germany, other locations may be supported. All spatial data
+including weather and climate information are provided under the Creative
+Commons licence CC BY 4.0 as stated in the [legal notices](https://www.dwd.de/EN/service/legal_notice/legal_notice.html).
+More information about the DWD can be found on their [homepage](https://www.dwd.de/).
+
+All weather stations for which information can be obtained can be found in the [station list from the DWD](https://www.dwd.de/DE/leistungen/met_verfahren_mosmix/mosmix_stationskatalog.cfg).
+
+## Installation
+Download the newest release from the [Github Releases page](https://github.com/prometheus42/weather.dwd/releases) and install it
+manually in Kodi.
+
+## Build
+To build a new release, the version has to be changed in addon.xml and the
+changelog has to be updated. After that the release archive can be created with
+the following command:
+
+    pipenv run python build.py 
 
 ## Links
 * This plugin is based on the NOAA plugin: https://github.com/randallspicher/weather.noaa/
