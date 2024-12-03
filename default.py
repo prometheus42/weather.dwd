@@ -27,8 +27,7 @@ DEBUG = ADDON.getSetting('Debug')
 
 MAXDAYS = 10
 CACHE_LIFETIME = 3  # time in hours after which cache content is discarded
-SHELVE_FILE = xbmcvfs.translatePath(os.path.join(
-    ADDON.getAddonInfo('profile'), 'weather.data'))
+SHELVE_FILE = xbmcvfs.translatePath(os.path.join(ADDON.getAddonInfo('profile'), 'weather.data'))
 
 TEMP_UNIT = xbmc.getRegion('tempunit')
 SPEED_UNIT = xbmc.getRegion('speedunit')
@@ -216,12 +215,9 @@ def start_find_location_dialog(location_no):
             if selected != -1:
                 selected_location = found_stations[selected]
                 log(f'Selected location: {selected_location}')
-                ADDON.setSetting(
-                    f'Location{location_no}ID', selected_location[0])
-                ADDON.setSetting(
-                    f'Location{location_no}', selected_location[1])
-                ADDON.setSetting(
-                    f'Location{location_no}Name', selected_location[1])
+                ADDON.setSetting(f'Location{location_no}ID', selected_location[0])
+                ADDON.setSetting(f'Location{location_no}', selected_location[1])
+                ADDON.setSetting(f'Location{location_no}Name', selected_location[1])
         else:
             xbmcgui.Dialog().ok(LANGUAGE(32346), LANGUAGE(32347))
 
