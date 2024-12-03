@@ -1,19 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
-from future import standard_library
 import math
-import time
 
 import xbmc
 import xbmcaddon
 
-from dateutil.parser import parse
-import socket
-import urllib.request
-import json
-
-standard_library.install_aliases()
+from resources.lib.utils import log
 
 
 ADDON = xbmcaddon.Addon()
@@ -25,12 +16,6 @@ TEMPUNIT = xbmc.getRegion('tempunit')
 SPEEDUNIT = xbmc.getRegion('speedunit')
 DATEFORMAT = xbmc.getRegion('dateshort')
 TIMEFORMAT = xbmc.getRegion('meridiem')
-
-
-def log(txt):
-    if DEBUG == 'true':
-        message = u'%s: %s' % (ADDONID, txt)
-        xbmc.log(msg=message, level=xbmc.LOGDEBUG)
 
 
 def SPEED(mps):
@@ -135,6 +120,7 @@ def KPHTOBFT(spd):
 
 
 def FEELS_LIKE(Ts, Vs=0, Rs=0, ext=True):
+    # thanks to FrostBox @ http://forum.kodi.tv/showthread.php?tid=114637&pid=937168#pid937168
     T = float(Ts)
     V = float(Vs)
     R = float(Rs)
@@ -150,8 +136,6 @@ def FEELS_LIKE(Ts, Vs=0, Rs=0, ext=True):
     else:
         return str(int(round(FeelsLike)))
 
-# thanks to FrostBox @ http://forum.kodi.tv/showthread.php?tid=114637&pid=937168#pid937168
-
 
 def WIND_CHILL(Ts, Vs):
     T = float(Ts)
@@ -161,10 +145,9 @@ def WIND_CHILL(Ts, Vs):
                  (11.37 * V**0.16) + (0.3965 * T * V**0.16))
     return FeelsLike
 
-# https://en.wikipedia.org/wiki/Heat_index
-
 
 def HEAT_INDEX(Ts, Rs):
+    # https://en.wikipedia.org/wiki/Heat_index
     T = float(Ts)
     R = float(Rs)
     T = T * 1.8 + 32.0  # calaculation is done in F
@@ -174,10 +157,9 @@ def HEAT_INDEX(Ts, Rs):
     FeelsLike = (FeelsLike - 32.0) / 1.8  # convert to C
     return FeelsLike
 
-# thanks to FrostBox @ http://forum.kodi.tv/showthread.php?tid=114637&pid=937168#pid937168
-
 
 def DEW_POINT(Tc=0, RH=93.0, ext=True, minRH=(0, 0.075)[0]):
+    # thanks to FrostBox @ http://forum.kodi.tv/showthread.php?tid=114637&pid=937168#pid937168
     Es = 6.11 * 10.0**(7.5 * Tc / (237.7 + Tc))
     RH = RH or minRH
     E = (RH * Es) / 100
