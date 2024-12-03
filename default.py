@@ -286,7 +286,7 @@ def main():
             set_properties_for_alert_data(weather_data[location_no])
             set_property('WeatherProvider', 'DWD')
             set_property('WeatherProviderLogo', xbmcvfs.translatePath(os.path.join(
-                ADDON.getAddonInfo('path'), 'resources', 'media', 'dwd-logo-png.png')))
+                ADDON.getAddonInfo('path'), 'resources', 'media', 'logo.png')))
             # set location information
             for count, name in enumerate(get_station_names(), start=1):
                 set_property(f'Location{count}', name)

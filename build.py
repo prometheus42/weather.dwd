@@ -27,7 +27,7 @@ release_dir = 'releases'
 os.makedirs(release_dir, exist_ok=True)
 
 # build station list for addon
-build_station_list.build_station_list()
+# build_station_list.build_station_list()
 
 # build ZIP file with all the resources
 print(f'Creating {addon_id}-{addon_version}.zip file...')
