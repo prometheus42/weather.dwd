@@ -97,10 +97,10 @@ def set_properties_for_weather_data(weather_data):
     set_property('Current.Pressure', div10(
         current_data['surfacePressure'][0])) # array elem 0 is current hour
     sunrise = calc_time(
-        weather_data['days'][0]['sunrise'], f'{DATE_SHORT_FORMAT} {TIME_FORMAT}')
+        weather_data['days'][0]['sunrise'], f'{TIME_FORMAT}')
     set_property('Today.Sunrise', sunrise)
     sunset = calc_time(
-        weather_data['days'][0]['sunset'], f'{DATE_SHORT_FORMAT} {TIME_FORMAT}')
+        weather_data['days'][0]['sunset'], f'{TIME_FORMAT}')
     set_property('Today.Sunset', sunset)
     set_property('Current.FanartCode', get_icon_code_for_weather(
         current_data['icon1h'][0])) # array elem 0 is current hour
