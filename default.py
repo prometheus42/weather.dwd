@@ -144,15 +144,16 @@ def set_properties_for_weather_data(weather_data):
                      get_icon_path_for_weather(day['icon']))
         set_property(f'Daily.{no}.FanartCode',
                      get_icon_code_for_weather(day['icon']))
-        set_property(f'Daily.{no}.WindSpeed', div10(day['windSpeed']))
+        set_property(f'Daily.{no}.WindSpeed',
+                     str(div10(day['windSpeed'])) + ' km/h')
         set_property(f'Daily.{no}.WindDirection', xbmc.getLocalizedString(
             get_wind_direction(day['windDirection'])))
         set_property(f'Daily.{no}.WindDegree', day['windDirection'])
         set_property(f'Daily.{no}.WindGust', div10(day['windGust']))
         set_property(f'Daily.{no}.HighTemperature',
-                     div10(day['temperatureMax']))
+                     str(div10(day['temperatureMax'])) + '°C')
         set_property(f'Daily.{no}.LowTemperature',
-                     div10(day['temperatureMin']))
+                     str(div10(day['temperatureMin'])) + '°C')
         set_property(f'Daily.{no}.Precipitation', day['precipitation'])
         # set_property(f'Daily.{no}.TempMorn', )
         # set_property(f'Daily.{no}.TempDay', )
