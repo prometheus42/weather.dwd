@@ -170,8 +170,31 @@ def set_properties_for_weather_data(weather_data):
         # set_property(f'Daily.{no1}.Cloudiness', )
         # set_property(f'Daily.{no1}.Rain', )
         # set_property(f'Daily.{no1}.Snow', )
+
+    # Hourly.1.xxx - Hourly.24.xxx
+    dt = datetime.now()
+    for no in range(25):
+        no1 = no + 1
+        set_property(f'Hourly.{no1}.Time', dt.strftime('%H:00'))
+        set_property(f'Hourly.{no1}.LongDate', dt.strftime('%d. %B'))
+        set_property(f'Hourly.{no1}.ShortDate', dt.strftime('%d. %b'))
+        set_property(f'Hourly.{no1}.Outlook', DWD_ICON_MAPPING[current_data['icon1h'][dt.hour]])
+        set_property(f'Hourly.{no1}.OutlookIcon',
+                     get_icon_path_for_weather(current_data['icon1h'][dt.hour]))
+        set_property(f'Hourly.{no1}.FanartCode',
+                     get_icon_code_for_weather(current_data['icon1h'][dt.hour]))
+        set_property(f'Hourly.{no1}.Temperature',
+                     str(div10(current_data['temperature'][dt.hour])) + '°C')
+        set_property(f'Hourly.{no1}.DewPoint',
+                     str(div10(current_data['dewPoint2m'][dt.hour])) + '°C')
+        set_property(f'Hourly.{no1}.Humidity',
+                     div10(current_data['humidity'][dt.hour]))
+        set_property(f'Hourly.{no1}.Pressure',
+                     str(div10(current_data['surfacePressure'][dt.hour])) + ' hPa')
+        dt += timedelta(hours=1)
+
     # TODO: Check more extended labels.
-    # Hourly.1.xxx - Hourly.24.xxx, 36Hour.1.xxx - 36Hour.3.xxx, Weekend.1.xxx - Weekend.2.xxx
+    # 36Hour.1.xxx - 36Hour.3.xxx, Weekend.1.xxx - Weekend.2.xxx
 
 
 def set_properties_for_alert_data(weather_data):
@@ -312,7 +335,7 @@ def main():
             set_property('Daily.IsFetched', True)
             set_property('Weekend.IsFetched', False)
             set_property('36Hour.IsFetched', False)
-            set_property('Hourly.IsFetched', False)
+            set_property('Hourly.IsFetched', True)
         except DWDException as e:
             log(f'Could not get weather information: {e}')
     else:
