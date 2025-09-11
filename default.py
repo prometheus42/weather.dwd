@@ -125,47 +125,51 @@ def set_properties_for_weather_data(weather_data):
     # fill in the forecast for the next days
     for no, day in enumerate(weather_data['days']):
         dt = datetime.fromisoformat(day['dayDate'])
+
         # Day0.xxx - Day6.xxx
-        set_property(f'Day{no}.Title', dt.strftime(DATE_SHORT_FORMAT))
-        set_property(f'Day{no}.HighTemp', div10(day['temperatureMax']))
-        set_property(f'Day{no}.LowTemp', div10(day['temperatureMin']))
-        set_property(f'Day{no}.Outlook', DWD_ICON_MAPPING[day['icon']])
-        set_property(f'Day{no}.OutlookIcon',
-                     get_icon_path_for_weather(day['icon']))
-        set_property(f'Day{no}.FanartCode', 'na')
+        if no < 7:
+            set_property(f'Day{no}.Title', dt.strftime(DATE_SHORT_FORMAT))
+            set_property(f'Day{no}.HighTemp', div10(day['temperatureMax']))
+            set_property(f'Day{no}.LowTemp', div10(day['temperatureMin']))
+            set_property(f'Day{no}.Outlook', DWD_ICON_MAPPING[day['icon']])
+            set_property(f'Day{no}.OutlookIcon',
+                         get_icon_path_for_weather(day['icon']))
+            set_property(f'Day{no}.FanartCode', 'na')
+
         # Daily.1.xxx - Daily.10.xxx
-        set_property(f'Daily.{no}.LongDay', dt.strftime('%A'))
-        set_property(f'Daily.{no}.ShortDay', dt.strftime('%a'))
-        set_property(f'Daily.{no}.LongDate', dt.strftime('%d. %B'))
-        set_property(f'Daily.{no}.ShortDate', dt.strftime('%d. %b'))
-        set_property(f'Daily.{no}.Outlook', DWD_ICON_MAPPING[day['icon']])
-        set_property(f'Daily.{no}.ShortOutlook', DWD_ICON_MAPPING[day['icon']])
-        set_property(f'Daily.{no}.OutlookIcon',
+        no1 = no + 1
+        set_property(f'Daily.{no1}.LongDay', dt.strftime('%A'))
+        set_property(f'Daily.{no1}.ShortDay', dt.strftime('%a'))
+        set_property(f'Daily.{no1}.LongDate', dt.strftime('%d. %B'))
+        set_property(f'Daily.{no1}.ShortDate', dt.strftime('%d. %b'))
+        set_property(f'Daily.{no1}.Outlook', DWD_ICON_MAPPING[day['icon']])
+        set_property(f'Daily.{no1}.ShortOutlook', DWD_ICON_MAPPING[day['icon']])
+        set_property(f'Daily.{no1}.OutlookIcon',
                      get_icon_path_for_weather(day['icon']))
-        set_property(f'Daily.{no}.FanartCode',
+        set_property(f'Daily.{no1}.FanartCode',
                      get_icon_code_for_weather(day['icon']))
-        set_property(f'Daily.{no}.WindSpeed',
+        set_property(f'Daily.{no1}.WindSpeed',
                      str(div10(day['windSpeed'])) + ' km/h')
-        set_property(f'Daily.{no}.WindDirection', xbmc.getLocalizedString(
+        set_property(f'Daily.{no1}.WindDirection', xbmc.getLocalizedString(
             get_wind_direction(day['windDirection'])))
-        set_property(f'Daily.{no}.WindDegree', day['windDirection'])
-        set_property(f'Daily.{no}.WindGust', div10(day['windGust']))
-        set_property(f'Daily.{no}.HighTemperature',
+        set_property(f'Daily.{no1}.WindDegree', day['windDirection'])
+        set_property(f'Daily.{no1}.WindGust', div10(day['windGust']))
+        set_property(f'Daily.{no1}.HighTemperature',
                      str(div10(day['temperatureMax'])) + '°C')
-        set_property(f'Daily.{no}.LowTemperature',
+        set_property(f'Daily.{no1}.LowTemperature',
                      str(div10(day['temperatureMin'])) + '°C')
-        set_property(f'Daily.{no}.Precipitation', day['precipitation'])
-        # set_property(f'Daily.{no}.TempMorn', )
-        # set_property(f'Daily.{no}.TempDay', )
-        # set_property(f'Daily.{no}.TempEve', )
-        # set_property(f'Daily.{no}.TempNight', )
-        # set_property(f'Daily.{no}.Humidity', )
-        # set_property(f'Daily.{no}.DewPoint', )
-        # set_property(f'Daily.{no}.FeelsLike', )
-        # set_property(f'Daily.{no}.Pressure', )
-        # set_property(f'Daily.{no}.Cloudiness', )
-        # set_property(f'Daily.{no}.Rain', )
-        # set_property(f'Daily.{no}.Snow', )
+        set_property(f'Daily.{no1}.Precipitation', day['precipitation'])
+        # set_property(f'Daily.{no1}.TempMorn', )
+        # set_property(f'Daily.{no1}.TempDay', )
+        # set_property(f'Daily.{no1}.TempEve', )
+        # set_property(f'Daily.{no1}.TempNight', )
+        # set_property(f'Daily.{no1}.Humidity', )
+        # set_property(f'Daily.{no1}.DewPoint', )
+        # set_property(f'Daily.{no1}.FeelsLike', )
+        # set_property(f'Daily.{no1}.Pressure', )
+        # set_property(f'Daily.{no1}.Cloudiness', )
+        # set_property(f'Daily.{no1}.Rain', )
+        # set_property(f'Daily.{no1}.Snow', )
     # TODO: Check more extended labels.
     # Hourly.1.xxx - Hourly.24.xxx, 36Hour.1.xxx - 36Hour.3.xxx, Weekend.1.xxx - Weekend.2.xxx
 
