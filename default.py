@@ -150,9 +150,9 @@ def set_properties_for_weather_data(weather_data):
         set_property(f'Daily.{no}.WindDegree', day['windDirection'])
         set_property(f'Daily.{no}.WindGust', div10(day['windGust']))
         set_property(f'Daily.{no}.HighTemperature',
-                     div10(day['temperatureMin']))
-        set_property(f'Daily.{no}.LowTemperature',
                      div10(day['temperatureMax']))
+        set_property(f'Daily.{no}.LowTemperature',
+                     div10(day['temperatureMin']))
         set_property(f'Daily.{no}.Precipitation', day['precipitation'])
         # set_property(f'Daily.{no}.TempMorn', )
         # set_property(f'Daily.{no}.TempDay', )
