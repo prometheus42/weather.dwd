@@ -83,42 +83,37 @@ def set_properties_for_weather_data(weather_data):
     # get values from forecast data and save it to the correct properties
     current_data = weather_data['forecast1']
     set_property('Current.Condition',
-                 DWD_ICON_MAPPING[current_data['icon1h'][current_hour]])
+        DWD_ICON_MAPPING[current_data['icon1h'][0]]) # array elem 0 is current hour
     set_property('Current.Temperature', div10(
-        current_data['temperature'][current_hour]))
+        current_data['temperature'][current_hour])) # array elem 0 is hour of the current day
     set_property('Current.Humidity', div10(
-        current_data['humidity'][current_hour]))
-    set_property('Current.ChancePrecipitation',
-                 current_data['precipitationProbablity'])  # precipitationTotal
+        current_data['humidity'][0])) # array elem 0 is current hour
     set_property('Current.DewPoint', div10(
-        current_data['dewPoint2m'][current_hour]))
+        current_data['dewPoint2m'][0])) # array elem 0 is current hour
     # TODO: Use isDay[]
     set_property('Current.OutlookIcon',
-                 get_icon_path_for_weather(current_data['icon1h'][current_hour]))
+        get_icon_path_for_weather(current_data['icon1h'][0])) # array elem 0 is current hour
     # TODO: Check why wind and precipitation data is mostly empty?!
-    set_property('Current.WindGust', current_data['windGust'])
     set_property('Current.Pressure', div10(
-        current_data['surfacePressure'][current_hour]))
-    set_property('Current.Precipitation',
-                 current_data['precipitationTotal'][current_hour])
+        current_data['surfacePressure'][0])) # array elem 0 is current hour
     sunrise = calc_time(
         weather_data['days'][0]['sunrise'], f'{DATE_SHORT_FORMAT} {TIME_FORMAT}')
     set_property('Today.Sunrise', sunrise)
     sunset = calc_time(
         weather_data['days'][0]['sunset'], f'{DATE_SHORT_FORMAT} {TIME_FORMAT}')
     set_property('Today.Sunset', sunset)
-    set_property('Today.HighTemp', weather_data['days'][0]['temperatureMax'])
-    set_property('Today.LowTemp', weather_data['days'][0]['temperatureMin'])
     set_property('Current.FanartCode', get_icon_code_for_weather(
-        current_data['icon1h'][current_hour]))
+        current_data['icon1h'][0])) # array elem 0 is current hour
     set_property('Current.ConditionIcon',
-                 get_icon_path_for_weather(current_data['icon1h'][current_hour]))
+        get_icon_path_for_weather(current_data['icon1h'][0])) # array elem 0 is current hour
     # TODO: Check were to put: sunshine.
     # use wind information from first day (today!), because it is missing in the 'current' data
     set_property('Current.Wind', div10(weather_data['days'][0]['windSpeed']))
     wind_direction = div10(weather_data['days'][0]['windDirection'])
     set_property('Current.WindDirection', xbmc.getLocalizedString(
         get_wind_direction(wind_direction)))
+    set_property('Current.Precipitation',
+        weather_data['days'][0]['precipitation']) # array elem 0 is current hour
     # calculate feels like temperature
     set_property('Current.FeelsLike',  calc_feels_like_temperature(div10(
         current_data['temperature'][current_hour]), div10(weather_data['days'][0]['windSpeed'])))
@@ -138,12 +133,9 @@ def set_properties_for_weather_data(weather_data):
 
         # Daily.1.xxx - Daily.10.xxx
         no1 = no + 1
-        set_property(f'Daily.{no1}.LongDay', dt.strftime('%A'))
         set_property(f'Daily.{no1}.ShortDay', dt.strftime('%a'))
-        set_property(f'Daily.{no1}.LongDate', dt.strftime('%d. %B'))
         set_property(f'Daily.{no1}.ShortDate', dt.strftime('%d. %b'))
         set_property(f'Daily.{no1}.Outlook', DWD_ICON_MAPPING[day['icon']])
-        set_property(f'Daily.{no1}.ShortOutlook', DWD_ICON_MAPPING[day['icon']])
         set_property(f'Daily.{no1}.OutlookIcon',
                      get_icon_path_for_weather(day['icon']))
         set_property(f'Daily.{no1}.FanartCode',
@@ -152,24 +144,11 @@ def set_properties_for_weather_data(weather_data):
                      str(div10(day['windSpeed'])) + ' km/h')
         set_property(f'Daily.{no1}.WindDirection', xbmc.getLocalizedString(
             get_wind_direction(day['windDirection'])))
-        set_property(f'Daily.{no1}.WindDegree', day['windDirection'])
-        set_property(f'Daily.{no1}.WindGust', div10(day['windGust']))
         set_property(f'Daily.{no1}.HighTemperature',
                      str(div10(day['temperatureMax'])) + '°C')
         set_property(f'Daily.{no1}.LowTemperature',
                      str(div10(day['temperatureMin'])) + '°C')
         set_property(f'Daily.{no1}.Precipitation', day['precipitation'])
-        # set_property(f'Daily.{no1}.TempMorn', )
-        # set_property(f'Daily.{no1}.TempDay', )
-        # set_property(f'Daily.{no1}.TempEve', )
-        # set_property(f'Daily.{no1}.TempNight', )
-        # set_property(f'Daily.{no1}.Humidity', )
-        # set_property(f'Daily.{no1}.DewPoint', )
-        # set_property(f'Daily.{no1}.FeelsLike', )
-        # set_property(f'Daily.{no1}.Pressure', )
-        # set_property(f'Daily.{no1}.Cloudiness', )
-        # set_property(f'Daily.{no1}.Rain', )
-        # set_property(f'Daily.{no1}.Snow', )
 
     # Hourly.1.xxx - Hourly.24.xxx
     dt = datetime.now()
