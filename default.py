@@ -112,8 +112,9 @@ def set_properties_for_weather_data(weather_data):
     wind_direction = div10(weather_data['days'][0]['windDirection'])
     set_property('Current.WindDirection', xbmc.getLocalizedString(
         get_wind_direction(wind_direction)))
-    set_property('Current.Precipitation',
-        weather_data['days'][0]['precipitation']) # array elem 0 is current hour
+# TODO: 'precipitation' is not probability, it's amount in 10th of mm per day
+#    set_property('Current.Precipitation',
+#        weather_data['days'][0]['precipitation']) # array elem 0 is current hour
     # calculate feels like temperature
     set_property('Current.FeelsLike',  calc_feels_like_temperature(div10(
         current_data['temperature'][current_hour]), div10(weather_data['days'][0]['windSpeed'])))
@@ -149,7 +150,8 @@ def set_properties_for_weather_data(weather_data):
                      str(div10(day['temperatureMax'])) + '°C')
         set_property(f'Daily.{no1}.LowTemperature',
                      str(div10(day['temperatureMin'])) + '°C')
-        set_property(f'Daily.{no1}.Precipitation', day['precipitation'])
+# TODO: 'precipitation' is not probability, it's amount in 10th of mm per day
+#        set_property(f'Daily.{no1}.Precipitation', day['precipitation'])
 
     # Hourly.1.xxx - Hourly.24.xxx
     dt = datetime.now()
