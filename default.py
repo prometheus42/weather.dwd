@@ -15,7 +15,7 @@ import xbmcaddon
 
 from resources.lib.utils import log
 from resources.lib.weather import DWD_ICON_MAPPING, get_wind_direction, get_icon_code_for_weather, get_icon_path_for_weather, calc_feels_like_temperature
-from resources.lib.dwd import fetch_forecast_data, fetch_current_weather_data, get_station_names, find_station_by_name, get_coordinates_for_station, div10, calc_time, DWDException
+from resources.lib.dwd import fetch_forecast_data, get_station_names, find_station_by_name, get_coordinates_for_station, div10, calc_time, DWDException
 
 
 WEATHER_WINDOW = xbmcgui.Window(12600)
@@ -27,6 +27,7 @@ DEBUG = ADDON.getSetting('Debug')
 
 MAXDAYS = 10
 CACHE_LIFETIME = 3  # time in hours after which cache content is discarded
+SHELVE_PATH = xbmcvfs.translatePath(os.path.join(ADDON.getAddonInfo('profile')))
 SHELVE_FILE = xbmcvfs.translatePath(os.path.join(ADDON.getAddonInfo('profile'), 'weather.data'))
 
 TEMP_UNIT = xbmc.getRegion('tempunit')
@@ -251,13 +252,11 @@ def main():
     global CACHE_LIFETIME
     CACHE_LIFETIME = int(ADDON.getSetting('CacheLifetime'))
     log(f'Setting cache lifetime to {CACHE_LIFETIME} hours.')
-    try:
-        data_shelf = shelve.open(SHELVE_FILE)
-    except FileNotFoundError:
-        log(f"{SHELVE_FILE} doesn't exists, crating path")
-        os.makedirs(SHELVE_FILE)
-        data_shelf = shelve.open(SHELVE_FILE)
-
+    # create addon folder in profile if it doesn't exist
+    os.makedirs(SHELVE_PATH, exist_ok=True)
+    # read existing shelve or create a new one if it doesn't exist
+    data_shelf = shelve.open(SHELVE_FILE, flag='c')
+    # handle command line arguments for Kodi settings page
     if sys.argv[1] == 'find_location':
         log('find_location: ' + sys.argv[2])
         start_find_location_dialog(sys.argv[2])
