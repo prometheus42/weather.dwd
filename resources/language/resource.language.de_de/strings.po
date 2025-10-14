@@ -197,4 +197,4 @@ msgstr "Addon-Einstellungen"
 
 msgctxt "#32351"
 msgid "Cache lifetime"
-msgstr "Gültigkeitsdauer des Cache"
+msgstr "Gültigkeitsdauer des Cache in Stunden"
