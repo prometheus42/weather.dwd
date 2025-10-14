@@ -267,19 +267,18 @@ def main():
             lastupdatekey = 'dwd_lastupdate'
             weatherdatakey = 'dwd_weatherdata'
             # get weather data...
-            if lastupdatekey not in data_shelf \
-                    or (datetime.now() - data_shelf[lastupdatekey]) > timedelta(hours=CACHE_LIFETIME):
+            if (weatherdatakey in data_shelf and location_no in data_shelf[weatherdatakey]
+                and (datetime.now() - data_shelf[lastupdatekey]) < timedelta(hours=CACHE_LIFETIME)):
+                # ...from cache if there is data for the requested location and it is still fresh
+                log(f'Getting weather data for location no. {location_no} from shelf.')
+                weather_data = data_shelf[weatherdatakey]
+            else:
                 # ...from DWD API if shelved data is stale
                 log(f'Stored weather data is older than {CACHE_LIFETIME} hours!')
                 weather_data = fetch_forecast_data()
-                print(weather_data)
                 log(f'Storing weather data at {datetime.now()} in shelf.')
                 data_shelf[lastupdatekey] = datetime.now()
                 data_shelf[weatherdatakey] = weather_data
-            else:
-                # ...from stored data otherwise
-                log('Getting weather data from shelf.')
-                weather_data = data_shelf[weatherdatakey]
             # evaluate weather data and set properties for Kodi
             set_properties_for_weather_data(weather_data[location_no])
             set_properties_for_alert_data(weather_data[location_no])
