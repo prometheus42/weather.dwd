@@ -4,8 +4,7 @@ import os
 from zipfile import ZipFile
 from xml.dom.minidom import parse
 
-import build_station_list
-
+#import build_station_list
 
 included_files = [
     'addon.xml',
