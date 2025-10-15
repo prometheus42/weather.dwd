@@ -36,5 +36,7 @@ with ZipFile(os.path.join(f'{release_dir}', f'{addon_id}-{addon_version}.zip'), 
             releasezip.write(file, os.path.join(addon_id, file))
         elif os.path.isdir(file):
             for root, dirs, files in os.walk(file):
+                if '__pycache__' in root:
+                    continue
                 for name in files:
                     releasezip.write(os.path.join(root, name), os.path.join(addon_id, root, name))
