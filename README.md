@@ -1,5 +1,4 @@
 # weather.dwd - A Kodi Plugin for the German weather service (DWD) weather forecasts
-
 This Kodi addon fetches weather reports from the German weather service.
 
 The weather data for this addon are provided by the Deutscher Wetterdienst

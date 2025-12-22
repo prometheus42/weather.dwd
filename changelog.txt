@@ -1,3 +1,6 @@
+v0.8.0
+- Applied all improvements and fixes from @ksooo
+- Cleanup code and refactor units.
 v0.7.2
 - Fix problem if cache file does not exist.
 v0.7.1
