@@ -36,36 +36,35 @@ DWD_ICON_MAPPING = {
 
 
 DWD_TO_KODI_ICON_MAPPING = {
-    1: 32,  # Sonne -> clear (day)
-    # 1: 31, # Sonne -> clear (night)
-    # TODO: Choose correct icon depending on time of the day!
-    2: 30,  # Sonne, leicht bewölkt -> 'partly cloudy (day)'
-    # 2: 29,  # Sonne, leicht bewölkt -> 'partly cloudy (night)'
-    # 2: 44,  # Sonne, leicht bewölkt -> partly cloudy
-    3: 28,  # Sonne, bewölkt -> 'mostly cloudy (day)',
-    # 3: 27,  # Sonne, bewölkt -> 'mostly cloudy (night)',
-    4: 26,  # : 'cloudy',
-    5: 20,  # 'foggy',
-    6: 20,  # Nebel und Rutschgefahr
-    7: 9,  # Leichter Regen -> drizzle
-    8: 11,  # Regen -> showers
-    9: 12,  # Starker Regen -> showers
-    10: 8,  # leichter Regen, Rutschgefahr -> freezing drizzle
+    1: 32,   # Sonne -> clear (day)
+    #  31,   # Sonne -> clear (night)
+    2: 30,   # Sonne, leicht bewölkt -> 'partly cloudy (day)'
+    #  29,   # Sonne, leicht bewölkt -> 'partly cloudy (night)'
+    #  44,   # Sonne, leicht bewölkt -> partly cloudy
+    3: 28,   # Sonne, bewölkt -> 'mostly cloudy (day)',
+    #  27,   # Sonne, bewölkt -> 'mostly cloudy (night)',
+    4: 26,   # Bewölkt -> 'cloudy',
+    5: 20,   # Nebelig -> 'foggy',
+    6: 20,   # Nebel und Rutschgefahr
+    7: 9,    # Leichter Regen -> drizzle
+    8: 11,   # Regen -> showers
+    9: 12,   # Starker Regen -> showers
+    10: 8,   # leichter Regen, Rutschgefahr -> freezing drizzle
     11: 10,  # Starker Regen, Rutschgefahr -> freezing rain
-    12: 6,  # 'Regen, vereinzelt Schneefall' -> mixed rain and sleet
-    13: 5,  # Regen, vermehrt Schneefall -> mixed rain and snow
-    14: 14,  # 'leichter Schneefall -> light snow showers
+    12: 6,   # Regen, vereinzelt Schneefall -> mixed rain and sleet
+    13: 5,   # Regen, vermehrt Schneefall -> mixed rain and snow
+    14: 14,  # leichter Schneefall -> light snow showers
     15: 16,  # Schneefall -> snow
     16: 41,  # starker Schneefall -> heavy snow
     17: 17,  # Wolken, (Hagel) -> hail
-    18: 9,  # Sonne, leichter Regen -> drizzle
+    18: 9,   # Sonne, leichter Regen -> drizzle
     19: 12,  # Sonne, starker Regen -> showers
-    20: 6,  # Sonne, Regen, vereinzelter Schneefall -> mixed rain and sleet
-    21: 5,  # Sonne, Regen, vermehrter Schneefall -> mixed rain and snow
+    20: 6,   # Sonne, Regen, vereinzelter Schneefall -> mixed rain and sleet
+    21: 5,   # Sonne, Regen, vermehrter Schneefall -> mixed rain and snow
     24: 17,  # Sonne, (Hagel) -> hail
     25: 17,  # Sonne, (staker Hagel) -> hail
-    26: 4,  # Gewitter -> thunderstorm
-    # 26: 37,  # Gewitter -> isolated thunderstorms
+    26: 4,   # Gewitter -> thunderstorm
+    # : 37,  # Gewitter -> isolated thunderstorms
     27: 47,  # Gewitter, Regen -> isolated thundershowers
     28: 45,  # Gewitter, starker Regen -> thundershowers
     29: 35,  # Gewitter, (Hagel) -> mixed rain and hail
@@ -122,11 +121,6 @@ def get_icon_path_for_weather(icon_no, day=True):
     a file path to a fitting icon provided by Kodi.
     """
     condition_icon_no = get_icon_code_for_weather(icon_no, day=day)
-    # condition_icon_file = xbmcvfs.translatePath(os.path.join(
-    #    'resource://', 'resource.images.weathericons.default', f'{condition_icon_no}.png'))
-    # condition_icon_file = xbmcvfs.translatePath(os.path.join(
-    #    'special://home', 'addons', 'resource.images.weathericons.default', 'resources', f'{condition_icon_no}.png'))
-    # WEATHER_ICON = xbmcvfs.translatePath('%s.png') % icon_no
     condition_icon_file = f'{condition_icon_no}.png'
     return condition_icon_file
 

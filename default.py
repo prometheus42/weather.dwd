@@ -25,16 +25,17 @@ ADDONID = ADDON.getAddonInfo('id')
 LANGUAGE = ADDON.getLocalizedString
 DEBUG = ADDON.getSetting('Debug')
 
-MAXDAYS = 10
 CACHE_LIFETIME = 3  # time in hours after which cache content is discarded
 SHELVE_PATH = xbmcvfs.translatePath(os.path.join(ADDON.getAddonInfo('profile')))
 SHELVE_FILE = xbmcvfs.translatePath(os.path.join(ADDON.getAddonInfo('profile'), 'weather.data'))
 
-TEMP_UNIT = xbmc.getRegion('tempunit')
-SPEED_UNIT = xbmc.getRegion('speedunit')
+TEMP_UNIT = '°C'  # set temperature unit manually to match DWD data
+WIND_SPEED_UNIT = 'km/h'  # set wind speed unit manually to match DWD data
+PRESSURE_UNIT = 'hPa'  # set pressure unit manually to match DWD data
 DATE_SHORT_FORMAT = xbmc.getRegion('dateshort')
 DATE_LONG_FORMAT = xbmc.getRegion('datelong')
 TIME_FORMAT = xbmc.getRegion('time')
+WEEKDAY_FORMAT = '%a'
 
 
 def set_property(name, value):
@@ -45,27 +46,6 @@ def set_property(name, value):
 def clear_property(name):
     """Clear all properties."""
     WEATHER_WINDOW.clearProperty(name)
-
-
-def clear():
-    """Reset all properties to default values."""
-    set_property('Current.Condition', 'N/A')
-    set_property('Current.Temperature', '0')
-    set_property('Current.Wind', '0')
-    set_property('Current.WindDirection', 'N/A')
-    set_property('Current.Humidity', '0')
-    set_property('Current.FeelsLike', '0')
-    set_property('Current.UVIndex', '0')
-    set_property('Current.DewPoint', '0')
-    set_property('Current.OutlookIcon', 'na.png')
-    set_property('Current.FanartCode', 'na')
-    for i in range(0, MAXDAYS+1):
-        set_property(f'Day{i}.Title', 'N/A')
-        set_property(f'Day{i}.HighTemp', '0')
-        set_property(f'Day{i}.LowTemp', '0')
-        set_property(f'Day{i}.Outlook', 'N/A')
-        set_property(f'Day{i}.OutlookIcon', 'na.png')
-        set_property(f'Day{i}.FanartCode', 'na')
 
 
 def set_properties_for_weather_data(weather_data):
@@ -82,103 +62,73 @@ def set_properties_for_weather_data(weather_data):
     log(f'Current hour is: {current_hour}')
     # get values from forecast data and save it to the correct properties
     current_data = weather_data['forecast1']
-    isday = current_data['isDay'][current_hour] # array elem 0 is first hour of the current day
-    set_property('Current.Condition',
-        DWD_ICON_MAPPING[current_data['icon1h'][0]]) # array elem 0 is current hour
-    set_property('Current.Temperature', div10(
-        current_data['temperature'][current_hour])) # array elem 0 is first hour of the current day
-    set_property('Current.Humidity', div10(
-        current_data['humidity'][0])) # array elem 0 is current hour
-    set_property('Current.DewPoint', div10(
-        current_data['dewPoint2m'][0])) # array elem 0 is current hour
-    set_property('Current.OutlookIcon',
-        get_icon_path_for_weather(current_data['icon1h'][0], isday)) # array elem 0 is current hour
+    # first element of array for most metrics is the current hour,
+    # there are some exceptions like 'isDay' were the array starts at hour 0
+    isday = current_data['isDay'][current_hour]
+    set_property('Current.Condition', DWD_ICON_MAPPING[current_data['icon1h'][0]])
+    set_property('Current.Temperature', div10(current_data['temperature'][current_hour]))
+    set_property('Current.Humidity', div10(current_data['humidity'][0]))
+    set_property('Current.DewPoint', div10(current_data['dewPoint2m'][0]))
+    set_property('Current.OutlookIcon', get_icon_path_for_weather(current_data['icon1h'][0], isday))
     # TODO: Check why wind and precipitation data is mostly empty?!
-    set_property('Current.Pressure', div10(
-        current_data['surfacePressure'][0])) # array elem 0 is current hour
-    sunrise = calc_time(
-        weather_data['days'][0]['sunrise'], f'{TIME_FORMAT}')
+    set_property('Current.Pressure', div10(current_data['surfacePressure'][0]))
+    sunrise = calc_time(weather_data['days'][0]['sunrise'], TIME_FORMAT)
     set_property('Today.Sunrise', sunrise)
-    sunset = calc_time(
-        weather_data['days'][0]['sunset'], f'{TIME_FORMAT}')
+    sunset = calc_time(weather_data['days'][0]['sunset'], TIME_FORMAT)
     set_property('Today.Sunset', sunset)
-    set_property('Current.FanartCode', get_icon_code_for_weather(
-        current_data['icon1h'][0], isday)) # array elem 0 is current hour
-    set_property('Current.ConditionIcon',
-        get_icon_path_for_weather(current_data['icon1h'][0], isday)) # array elem 0 is current hour
-    # TODO: Check were to put: sunshine.
+    set_property('Current.FanartCode', get_icon_code_for_weather(current_data['icon1h'][0], isday))
+    set_property('Current.ConditionIcon', get_icon_path_for_weather(current_data['icon1h'][0], isday))
     # use wind information from first day (today!), because it is missing in the 'current' data
     set_property('Current.Wind', div10(weather_data['days'][0]['windSpeed']))
     wind_direction = div10(weather_data['days'][0]['windDirection'])
-    set_property('Current.WindDirection', xbmc.getLocalizedString(
-        get_wind_direction(wind_direction)))
-# TODO: 'precipitation' is not probability, it's amount in 10th of mm per day
-#    set_property('Current.Precipitation',
-#        weather_data['days'][0]['precipitation']) # array elem 0 is current hour
+    set_property('Current.WindDirection', xbmc.getLocalizedString(get_wind_direction(wind_direction)))
+    # TODO: 'precipitation' is not probability, it's amount in 10th of mm per day
+    #       set_property('Current.Precipitation', weather_data['days'][0]['precipitation'])
     # calculate feels like temperature
-    set_property('Current.FeelsLike',  calc_feels_like_temperature(div10(
-        current_data['temperature'][current_hour]), div10(weather_data['days'][0]['windSpeed'])))
+    feelslike = calc_feels_like_temperature(div10(current_data['temperature'][current_hour]), div10(weather_data['days'][0]['windSpeed']))
+    set_property('Current.FeelsLike', feelslike)
+
     # fill in the forecast for the next days
     for no, day in enumerate(weather_data['days']):
         dt = datetime.fromisoformat(day['dayDate'])
-
         # Day0.xxx - Day6.xxx
         if no < 7:
             set_property(f'Day{no}.Title', dt.strftime(DATE_SHORT_FORMAT))
             set_property(f'Day{no}.HighTemp', div10(day['temperatureMax']))
             set_property(f'Day{no}.LowTemp', div10(day['temperatureMin']))
             set_property(f'Day{no}.Outlook', DWD_ICON_MAPPING[day['icon']])
-            set_property(f'Day{no}.OutlookIcon',
-                         get_icon_path_for_weather(day['icon']))
-            set_property(f'Day{no}.FanartCode',
-                         get_icon_code_for_weather(day['icon']))
-
+            set_property(f'Day{no}.OutlookIcon', get_icon_path_for_weather(day['icon']))
+            set_property(f'Day{no}.FanartCode', get_icon_code_for_weather(day['icon']))
         # Daily.1.xxx - Daily.10.xxx
         no1 = no + 1
-        set_property(f'Daily.{no1}.ShortDay', dt.strftime('%a'))
-        set_property(f'Daily.{no1}.ShortDate', dt.strftime('%d. %b'))
+        set_property(f'Daily.{no1}.ShortDay', dt.strftime(WEEKDAY_FORMAT))
+        set_property(f'Daily.{no1}.ShortDate', dt.strftime(DATE_SHORT_FORMAT))
         set_property(f'Daily.{no1}.Outlook', DWD_ICON_MAPPING[day['icon']])
-        set_property(f'Daily.{no1}.OutlookIcon',
-                     get_icon_path_for_weather(day['icon']))
-        set_property(f'Daily.{no1}.FanartCode',
-                     get_icon_code_for_weather(day['icon']))
-        set_property(f'Daily.{no1}.WindSpeed',
-                     str(div10(day['windSpeed'])) + ' km/h')
-        set_property(f'Daily.{no1}.WindDirection', xbmc.getLocalizedString(
-            get_wind_direction(day['windDirection'])))
-        set_property(f'Daily.{no1}.HighTemperature',
-                     str(div10(day['temperatureMax'])) + '°C')
-        set_property(f'Daily.{no1}.LowTemperature',
-                     str(div10(day['temperatureMin'])) + '°C')
-# TODO: 'precipitation' is not probability, it's amount in 10th of mm per day
-#        set_property(f'Daily.{no1}.Precipitation', day['precipitation'])
+        set_property(f'Daily.{no1}.OutlookIcon', get_icon_path_for_weather(day['icon']))
+        set_property(f'Daily.{no1}.FanartCode', get_icon_code_for_weather(day['icon']))
+        set_property(f'Daily.{no1}.WindSpeed', f'{div10(day['windSpeed'])} {WIND_SPEED_UNIT}')
+        set_property(f'Daily.{no1}.WindDirection', xbmc.getLocalizedString(get_wind_direction(day['windDirection'])))
+        set_property(f'Daily.{no1}.HighTemperature', f'{div10(day['temperatureMax'])} {TEMP_UNIT}')
+        set_property(f'Daily.{no1}.LowTemperature', f'{div10(day['temperatureMin'])} {TEMP_UNIT}')
+        # TODO: 'precipitation' is not probability, it's amount in 10th of mm per day
+        #       set_property(f'Daily.{no1}.Precipitation', day['precipitation'])
 
     # Hourly.1.xxx - Hourly.24.xxx
     dt = datetime.now()
-    for no in range(25):
-        isday = current_data['isDay'][dt.hour] # array elem 0 is first hour of the current day
-        no1 = no + 1
-        set_property(f'Hourly.{no1}.Time', dt.strftime('%H:00'))
-        set_property(f'Hourly.{no1}.LongDate', dt.strftime('%d. %B'))
-        set_property(f'Hourly.{no1}.ShortDate', dt.strftime('%d. %b'))
-        set_property(f'Hourly.{no1}.Outlook',
-                     DWD_ICON_MAPPING[current_data['icon1h'][dt.hour]])
-        set_property(f'Hourly.{no1}.OutlookIcon',
-                     get_icon_path_for_weather(current_data['icon1h'][dt.hour], isday))
-        set_property(f'Hourly.{no1}.FanartCode',
-                     get_icon_code_for_weather(current_data['icon1h'][dt.hour], isday))
-        set_property(f'Hourly.{no1}.Temperature',
-                     str(div10(current_data['temperature'][dt.hour])) + '°C')
-        set_property(f'Hourly.{no1}.DewPoint',
-                     str(div10(current_data['dewPoint2m'][dt.hour])) + '°C')
-        set_property(f'Hourly.{no1}.Humidity',
-                     div10(current_data['humidity'][dt.hour]))
-        set_property(f'Hourly.{no1}.Pressure',
-                     str(div10(current_data['surfacePressure'][dt.hour])) + ' hPa')
+    for no in range(1, 25):
+        isday = current_data['isDay'][dt.hour]
+        set_property(f'Hourly.{no}.Time', dt.strftime('%H:00'))
+        set_property(f'Hourly.{no}.LongDate', dt.strftime(DATE_LONG_FORMAT))
+        set_property(f'Hourly.{no}.ShortDate', dt.strftime(DATE_SHORT_FORMAT))
+        set_property(f'Hourly.{no}.Outlook', DWD_ICON_MAPPING[current_data['icon1h'][dt.hour]])
+        set_property(f'Hourly.{no}.OutlookIcon', get_icon_path_for_weather(current_data['icon1h'][dt.hour], isday))
+        set_property(f'Hourly.{no}.FanartCode', get_icon_code_for_weather(current_data['icon1h'][dt.hour], isday))
+        set_property(f'Hourly.{no}.Temperature', f'{div10(current_data['temperature'][dt.hour])} {TEMP_UNIT}')
+        set_property(f'Hourly.{no}.DewPoint', f'{div10(current_data['dewPoint2m'][dt.hour])} {TEMP_UNIT}')
+        set_property(f'Hourly.{no}.Humidity', div10(current_data['humidity'][dt.hour]))
+        set_property(f'Hourly.{no}.Rain', div10(current_data['precipitationTotal'][dt.hour]))
+        set_property(f'Hourly.{no}.Pressure', f'{div10(current_data['surfacePressure'][dt.hour])} {PRESSURE_UNIT}')
         dt += timedelta(hours=1)
-
-    # TODO: Check more extended labels.
-    # 36Hour.1.xxx - 36Hour.3.xxx, Weekend.1.xxx - Weekend.2.xxx
 
 
 def set_properties_for_alert_data(weather_data):
@@ -280,7 +230,7 @@ def main():
             weatherdatakey = 'dwd_weatherdata'
             # get weather data...
             if (weatherdatakey in data_shelf and location_no in data_shelf[weatherdatakey]
-                and (datetime.now() - data_shelf[lastupdatekey]) < timedelta(hours=CACHE_LIFETIME)):
+                    and (datetime.now() - data_shelf[lastupdatekey]) < timedelta(hours=CACHE_LIFETIME)):
                 # ...from cache if there is data for the requested location and it is still fresh
                 log(f'Getting weather data for location no. {location_no} from shelf.')
                 weather_data = data_shelf[weatherdatakey]
@@ -295,31 +245,30 @@ def main():
             set_properties_for_weather_data(weather_data[location_no])
             set_properties_for_alert_data(weather_data[location_no])
             set_property('WeatherProvider', 'DWD')
-            set_property('WeatherProviderLogo', xbmcvfs.translatePath(os.path.join(
-                ADDON.getAddonInfo('path'), 'resources', 'media', 'logo.png')))
+            set_property('WeatherProviderLogo',
+                         xbmcvfs.translatePath(os.path.join(ADDON.getAddonInfo('path'), 'resources', 'media', 'logo.png')))
             # set location information
+            set_property('Locations', len(get_station_names()))
             for count, name in enumerate(get_station_names(), start=1):
                 set_property(f'Location{count}', name)
                 if count == location_no:
                     current_station_name = get_station_names()[location_no-1]
+                    set_property('Location', current_station_name)
                     set_property('Current.Location', current_station_name)
                     set_property('Forecast.City', current_station_name)
                     set_property('Forecast.Country', 'Germany')
-                    lat, lon = get_coordinates_for_station(
-                        current_station_name)
+                    lat, lon = get_coordinates_for_station(current_station_name)
                     set_property('Forecast.Latitude', lat)
                     set_property('Forecast.Longitude', lon)
             set_property('Locations', len(get_station_names()))
             # set flags
             set_property('DWD.IsFetched', True)
+            set_property('Weather.IsFetched', True)
             set_property('Forecast.IsFetched', True)
             set_property('Current.IsFetched', True)
             set_property('Today.IsFetched', True)
-            set_property('Detailed.IsFetched', True)
-            set_property('Daily.IsFetched', True)
-            set_property('Weekend.IsFetched', False)
-            set_property('36Hour.IsFetched', False)
             set_property('Hourly.IsFetched', True)
+            set_property('Daily.IsFetched', True)
         except DWDException as e:
             log(f'Could not get weather information: {e}')
     else:

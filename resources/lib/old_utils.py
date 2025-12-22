@@ -4,8 +4,6 @@ import math
 import xbmc
 import xbmcaddon
 
-from resources.lib.utils import log
-
 
 ADDON = xbmcaddon.Addon()
 ADDONID = ADDON.getAddonInfo('id')
