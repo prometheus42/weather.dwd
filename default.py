@@ -105,10 +105,10 @@ def set_properties_for_weather_data(weather_data):
         set_property(f'Daily.{no+1}.Outlook', DWD_ICON_MAPPING[day['icon']])
         set_property(f'Daily.{no+1}.OutlookIcon', get_icon_path_for_weather(day['icon']))
         set_property(f'Daily.{no+1}.FanartCode', get_icon_code_for_weather(day['icon']))
-        set_property(f'Daily.{no+1}.WindSpeed', f'{div10(day['windSpeed'])} {WIND_SPEED_UNIT}')
+        set_property(f'Daily.{no+1}.WindSpeed', f'{div10(day["windSpeed"])} {WIND_SPEED_UNIT}')
         set_property(f'Daily.{no+1}.WindDirection', xbmc.getLocalizedString(get_wind_direction(day['windDirection'])))
-        set_property(f'Daily.{no+1}.HighTemperature', f'{div10(day['temperatureMax'])} {TEMP_UNIT}')
-        set_property(f'Daily.{no+1}.LowTemperature', f'{div10(day['temperatureMin'])} {TEMP_UNIT}')
+        set_property(f'Daily.{no+1}.HighTemperature', f'{div10(day["temperatureMax"])} {TEMP_UNIT}')
+        set_property(f'Daily.{no+1}.LowTemperature', f'{div10(day["temperatureMin"])} {TEMP_UNIT}')
         # TODO: 'precipitation' is not probability, it's amount in 10th of mm per day
         #       set_property(f'Daily.{no+1}.Precipitation', day['precipitation'])
 
@@ -124,11 +124,11 @@ def set_properties_for_weather_data(weather_data):
         set_property(f'Hourly.{no+1}.Outlook', DWD_ICON_MAPPING[current_data['icon1h'][weather_data_index]])
         set_property(f'Hourly.{no+1}.OutlookIcon', get_icon_path_for_weather(current_data['icon1h'][weather_data_index], is_day))
         set_property(f'Hourly.{no+1}.FanartCode', get_icon_code_for_weather(current_data['icon1h'][weather_data_index], is_day))
-        set_property(f'Hourly.{no+1}.Temperature', f'{div10(current_data['temperature'][weather_data_index])} {TEMP_UNIT}')
-        set_property(f'Hourly.{no+1}.DewPoint', f'{div10(current_data['dewPoint2m'][weather_data_index])} {TEMP_UNIT}')
+        set_property(f'Hourly.{no+1}.Temperature', f'{div10(current_data["temperature"][weather_data_index])} {TEMP_UNIT}')
+        set_property(f'Hourly.{no+1}.DewPoint', f'{div10(current_data["dewPoint2m"][weather_data_index])} {TEMP_UNIT}')
         set_property(f'Hourly.{no+1}.Humidity', div10(current_data['humidity'][weather_data_index]))
         set_property(f'Hourly.{no+1}.Rain', div10(current_data['precipitationTotal'][weather_data_index]))
-        set_property(f'Hourly.{no+1}.Pressure', f'{div10(current_data['surfacePressure'][weather_data_index])} {PRESSURE_UNIT}')
+        set_property(f'Hourly.{no+1}.Pressure', f'{div10(current_data["surfacePressure"][weather_data_index])} {PRESSURE_UNIT}')
 
 
 def set_properties_for_alert_data(weather_data):
