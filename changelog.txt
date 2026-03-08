@@ -1,3 +1,6 @@
+v0.10.0
+- Fix missing day name for skin "skin.arctic.zephyr.martian".
+- Refactor addon to fix warnings and errors from kodi-addon-checker.
 v0.8.1
 - Fix issue with hourly forecasts.
 v0.8.0
